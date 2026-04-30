@@ -56,7 +56,7 @@ router.get('/connections', authenticate, async (req: AuthRequest, res, next) => 
       include: { accounts: { where: { isHidden: false } } },
       orderBy: { createdAt: 'asc' },
     });
-    const safe = connections.map((conn) => {
+    const safe = connections.map((conn: any) => {
       const { pinEncrypted: _p, pinIv: _iv, loginNameEncrypted: _ln, ...c } = conn as typeof conn & { pinEncrypted: string; pinIv: string; loginNameEncrypted: string };
       void _p; void _iv; void _ln;
       return c;
