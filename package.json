@@ -22,7 +22,9 @@
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7"
+    "@types/react-dom": "^18.3.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "packageManager": "npm@10.9.8",
   "engines": {
@@ -30,6 +32,8 @@
   },
   "overrides": {
     "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7"
+    "@types/react-dom": "^18.3.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }
