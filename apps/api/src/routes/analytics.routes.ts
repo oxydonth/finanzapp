@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/database';
+import { applyCategorizationRules } from '../services/categorization.service';
 
 const router = Router();
 
@@ -87,6 +88,13 @@ router.get('/cash-flow', authenticate, async (req: AuthRequest, res, next) => {
         .map(([month, v]) => ({ month, ...v }))
         .sort((a, b) => a.month.localeCompare(b.month)),
     });
+  } catch (e) { next(e); }
+});
+
+router.post('/auto-categorize', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const count = await applyCategorizationRules(req.userId!);
+    res.json({ data: { count } });
   } catch (e) { next(e); }
 });
 

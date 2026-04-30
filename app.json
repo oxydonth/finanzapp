@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "554a74cb-30be-462b-833d-21f7838826fd"
+      }
+    },
+    "owner": "oxydonth",
+    "slug": "finapp",
+    "android": {
+      "package": "com.oxydonth.finapp"
+    },
+    "ios": {
+      "bundleIdentifier": "com.oxydonth.finapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

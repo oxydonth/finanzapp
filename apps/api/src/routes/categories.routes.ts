@@ -61,4 +61,46 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/:id/rules', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const cat = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!cat) throw new NotFoundError('Category');
+    if (cat.userId !== req.userId && !cat.isSystem) throw new ForbiddenError();
+    const rules = await prisma.categoryRule.findMany({
+      where: { categoryId: req.params.id },
+      orderBy: [{ priority: 'desc' }, { id: 'asc' }],
+    });
+    res.json({ data: rules });
+  } catch (e) { next(e); }
+});
+
+router.post('/:id/rules', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const cat = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!cat) throw new NotFoundError('Category');
+    if (cat.userId !== req.userId && !cat.isSystem) throw new ForbiddenError();
+    const body = z.object({
+      pattern: z.string().min(1),
+      field: z.enum(['purpose', 'creditorName', 'merchantName']).default('purpose'),
+      priority: z.number().int().default(0),
+    }).parse(req.body);
+    const rule = await prisma.categoryRule.create({
+      data: { categoryId: req.params.id, ...body },
+    });
+    res.status(201).json({ data: rule });
+  } catch (e) { next(e); }
+});
+
+router.delete('/:id/rules/:ruleId', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const cat = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!cat) throw new NotFoundError('Category');
+    if (cat.userId !== req.userId && !cat.isSystem) throw new ForbiddenError();
+    const rule = await prisma.categoryRule.findUnique({ where: { id: req.params.ruleId } });
+    if (!rule || rule.categoryId !== req.params.id) throw new NotFoundError('CategoryRule');
+    await prisma.categoryRule.delete({ where: { id: req.params.ruleId } });
+    res.json({ data: { message: 'Deleted' } });
+  } catch (e) { next(e); }
+});
+
 export default router;

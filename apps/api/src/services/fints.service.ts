@@ -6,6 +6,7 @@ import { findBankByBlz } from '@finanzapp/config';
 import { SyncStatus, AccountType, TransactionType } from '@finanzapp/types';
 import { AppError, NotFoundError } from '../utils/errors';
 import { v4 as uuidv4 } from 'uuid';
+import { applyCategorizationRules } from './categorization.service';
 
 interface PendingSession {
   client: PinTanClient;
@@ -186,6 +187,7 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
 
     let totalFetched = 0;
     let totalNew = 0;
+    const newTxIds: string[] = [];
 
     for (const account of connection.accounts) {
       const sepaAccount: SEPAAccount = {
@@ -241,7 +243,7 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
           const valueDate = parseMT940Date(tx.valueDate);
 
           try {
-            await prisma.transaction.create({
+            const created = await prisma.transaction.create({
               data: {
                 userId: connection.userId,
                 bankAccountId: account.id,
@@ -257,12 +259,15 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
               },
             });
             totalNew++;
+            newTxIds.push(created.id);
           } catch {
             // unique constraint violation = duplicate, skip
           }
         }
       }
     }
+
+    if (newTxIds.length > 0) await applyCategorizationRules(connection.userId, newTxIds);
 
     await prisma.bankConnection.update({
       where: { id: bankConnectionId },
