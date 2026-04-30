@@ -1,10 +1,16 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/database';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 
 const router = Router();
+
+const transactionWriteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
 
 router.get('/', authenticate, async (req: AuthRequest, res, next) => {
   try {
@@ -98,7 +104,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.patch('/:id', authenticate, async (req: AuthRequest, res, next) => {
+router.patch('/:id', authenticate, transactionWriteLimiter, async (req: AuthRequest, res, next) => {
   try {
     const tx = await prisma.transaction.findUnique({ where: { id: req.params.id } });
     if (!tx) throw new NotFoundError('Transaction');
