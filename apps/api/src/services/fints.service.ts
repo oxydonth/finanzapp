@@ -57,7 +57,7 @@ export async function initiateConnection(
 export async function submitTan(
   userId: string,
   sessionId: string,
-  tan: string,
+  _tan: string,
 ): Promise<{ connectionId: string }> {
   const session = pendingSessions.get(sessionId);
   if (!session) throw new AppError('Session expired or not found', 404);
@@ -229,13 +229,13 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
           const endToEndId = tx.descriptionStructured?.reference?.endToEndRef;
 
           // parse dates — mt940-js returns "YYMMDD" strings
-          function parseMT940Date(d: string): Date {
+          const parseMT940Date = (d: string): Date => {
             if (!d || d.length < 6) return new Date();
             const yy = parseInt(d.slice(0, 2), 10);
             const mm = parseInt(d.slice(2, 4), 10) - 1;
             const dd = parseInt(d.slice(4, 6), 10);
             return new Date(2000 + yy, mm, dd);
-          }
+          };
 
           const bookingDate = parseMT940Date(tx.entryDate);
           const valueDate = parseMT940Date(tx.valueDate);
