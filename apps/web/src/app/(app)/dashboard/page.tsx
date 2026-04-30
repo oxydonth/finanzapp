@@ -17,7 +17,7 @@ export default function DashboardPage() {
   });
   const { data: txData } = useQuery({
     queryKey: ['transactions', 'recent'],
-    queryFn: () => api.get<Transaction[]>('/transactions?limit=5') as Promise<{ data: Transaction[] }>,
+    queryFn: () => api.get<Transaction[]>('/transactions?limit=5'),
   });
   const { data: budgets } = useQuery({
     queryKey: ['budgets'],
@@ -29,7 +29,7 @@ export default function DashboardPage() {
   });
 
   const accounts = Array.isArray(accountsData) ? accountsData : [];
-  const transactions = (txData as { data?: Transaction[] })?.data ?? (Array.isArray(txData) ? txData : []);
+  const transactions: Transaction[] = Array.isArray(txData) ? txData : [];
   const budgetList = Array.isArray(budgets) ? budgets : [];
   const flowData = Array.isArray(cashFlow) ? cashFlow.map((d) => ({
     ...d,

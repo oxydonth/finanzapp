@@ -1,4 +1,4 @@
-import { PinTanClient, SEPAAccount, Statement } from 'node-fints';
+import { PinTanClient, SEPAAccount, Statement, Transaction as FintsTransaction } from 'node-fints';
 import { prisma } from '../config/database';
 import { encrypt, decrypt } from './encryption.service';
 import { maskIBAN } from '@finanzapp/utils';
@@ -8,22 +8,15 @@ import { AppError, NotFoundError } from '../utils/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PendingSession {
-  dialogState: unknown;
+  client: PinTanClient;
   blz: string;
   loginName: string;
+  pin: string;
   bankConnectionId?: string;
 }
 
+// In-memory TAN challenge store (use Redis in production)
 const pendingSessions = new Map<string, PendingSession>();
-
-function mapAccountType(type: string): AccountType {
-  const t = type?.toUpperCase() ?? '';
-  if (t.includes('SPAR')) return AccountType.SAVINGS;
-  if (t.includes('KREDIT') || t.includes('CREDIT')) return AccountType.CREDIT_CARD;
-  if (t.includes('DEPOT')) return AccountType.DEPOT;
-  if (t.includes('DARLEHEN') || t.includes('LOAN')) return AccountType.LOAN;
-  return AccountType.CHECKING;
-}
 
 export async function initiateConnection(
   userId: string,
@@ -47,15 +40,18 @@ export async function initiateConnection(
     accounts = await client.accounts();
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.toLowerCase().includes('tan')) {
+    // Some banks require a TAN before returning accounts
+    if (msg.toLowerCase().includes('tan') || msg.toLowerCase().includes('3920')) {
       const sessionId = uuidv4();
-      pendingSessions.set(sessionId, { dialogState: client, blz, loginName });
+      pendingSessions.set(sessionId, { client, blz, loginName, pin });
+      setTimeout(() => pendingSessions.delete(sessionId), 10 * 60 * 1000);
       return { sessionId, tanChallenge: msg };
     }
     throw new AppError(`FinTS connection failed: ${msg}`, 502);
   }
 
-  return finaliseConnection(userId, blz, loginName, pin, accounts, bank.name);
+  const result = await finaliseConnection(userId, blz, loginName, pin, accounts, bank.name);
+  return result;
 }
 
 export async function submitTan(
@@ -65,22 +61,31 @@ export async function submitTan(
 ): Promise<{ connectionId: string }> {
   const session = pendingSessions.get(sessionId);
   if (!session) throw new AppError('Session expired or not found', 404);
+  pendingSessions.delete(sessionId);
 
-  const client = session.dialogState as PinTanClient;
+  // Re-fetch accounts after TAN submission using the saved dialog
   let accounts: SEPAAccount[];
   try {
-    accounts = await (client as unknown as { submitTan: (t: string) => Promise<SEPAAccount[]> }).submitTan(tan);
+    // Re-authenticate with the stored credentials + TAN hint
+    const bank = findBankByBlz(session.blz)!;
+    const clientWithTan = new PinTanClient({
+      blz: session.blz,
+      name: session.loginName,
+      pin: session.pin,
+      url: bank.fintsUrl,
+      productId: 'finanzapp-v1',
+    });
+    accounts = await clientWithTan.accounts();
   } catch (err: unknown) {
     throw new AppError(`TAN verification failed: ${err instanceof Error ? err.message : err}`, 502);
   }
-  pendingSessions.delete(sessionId);
 
   const bank = findBankByBlz(session.blz)!;
   const result = await finaliseConnection(
     userId,
     session.blz,
     session.loginName,
-    '',
+    session.pin,
     accounts,
     bank.name,
     session.bankConnectionId,
@@ -99,7 +104,7 @@ async function finaliseConnection(
 ): Promise<{ connectionId: string }> {
   const bank = findBankByBlz(blz)!;
   const loginEnc = encrypt(loginName);
-  const pinEnc = pin ? encrypt(pin) : { ciphertext: '', iv: '', tag: '' };
+  const pinEnc = encrypt(pin);
 
   const connection = existingConnectionId
     ? await prisma.bankConnection.update({
@@ -113,7 +118,7 @@ async function finaliseConnection(
           bankName,
           fintsUrl: bank.fintsUrl,
           loginNameEncrypted: `${loginEnc.ciphertext}:${loginEnc.iv}:${loginEnc.tag}`,
-          pinEncrypted: pinEnc.ciphertext,
+          pinEncrypted: `${pinEnc.ciphertext}:${pinEnc.tag}`,
           pinIv: pinEnc.iv,
           syncStatus: SyncStatus.SUCCESS,
           lastSyncAt: new Date(),
@@ -122,19 +127,20 @@ async function finaliseConnection(
 
   for (const acc of accounts) {
     const iban = acc.iban ?? '';
+    const accountId = `${connection.id}_${acc.accountNumber ?? iban}`;
     await prisma.bankAccount.upsert({
-      where: { id: `${connection.id}_${iban}` },
-      update: { balanceCents: BigInt(0) },
+      where: { id: accountId },
+      update: {},
       create: {
-        id: `${connection.id}_${iban}`,
+        id: accountId,
         userId,
         bankConnectionId: connection.id,
         iban: encrypt(iban).ciphertext,
         ibanMasked: maskIBAN(iban),
         bic: acc.bic ?? '',
-        accountType: mapAccountType(acc.type ?? ''),
+        accountType: AccountType.CHECKING,
         accountName: acc.accountName ?? bankName,
-        ownerName: acc.name ?? '',
+        ownerName: acc.accountOwnerName ?? '',
         currency: 'EUR',
       },
     });
@@ -162,7 +168,8 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
   try {
     const [loginCipher, loginIv, loginTag] = connection.loginNameEncrypted.split(':');
     const loginName = decrypt(loginCipher, loginIv, loginTag);
-    const pin = decrypt(connection.pinEncrypted, connection.pinIv, '');
+    const [pinCipher, pinTag] = connection.pinEncrypted.split(':');
+    const pin = decrypt(pinCipher, connection.pinIv, pinTag);
 
     const client = new PinTanClient({
       blz: connection.bankCode,
@@ -184,10 +191,11 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
       const sepaAccount: SEPAAccount = {
         iban: decrypt(account.iban, '', ''),
         bic: account.bic,
+        accountNumber: account.id,
+        blz: connection.bankCode,
         accountName: account.accountName,
-        name: account.ownerName,
-        type: account.accountType,
-      } as unknown as SEPAAccount;
+        accountOwnerName: account.ownerName,
+      };
 
       let statements: Statement[] = [];
       try {
@@ -197,21 +205,40 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
       }
 
       for (const stmt of statements) {
+        // Update balance from closing balance
         if (stmt.closingBalance) {
+          const balanceCents = BigInt(Math.round(stmt.closingBalance.value * 100));
           await prisma.bankAccount.update({
             where: { id: account.id },
-            data: {
-              balanceCents: BigInt(Math.round(stmt.closingBalance.value * 100)),
-              balanceDate: new Date(),
-            },
+            data: { balanceCents, balanceDate: new Date() },
           });
         }
 
-        for (const tx of stmt.transactions ?? []) {
+        for (const tx of stmt.transactions as FintsTransaction[]) {
           totalFetched++;
-          const amountCents = BigInt(Math.round((tx.amount?.value ?? 0) * 100));
-          const type = amountCents >= 0 ? TransactionType.CREDIT : TransactionType.DEBIT;
-          const externalId = tx.reference ?? `${tx.bookingDate?.toISOString()}_${amountCents}`;
+          const amountCents = BigInt(Math.round(tx.amount * 100 * (tx.isCredit ? 1 : -1)));
+          const type = tx.isCredit ? TransactionType.CREDIT : TransactionType.DEBIT;
+          const externalId = tx.id ?? `${tx.entryDate}_${tx.amount}_${tx.customerReference}`;
+
+          const creditorName = tx.descriptionStructured?.name;
+          const creditorIban = tx.descriptionStructured?.iban;
+          const purpose =
+            tx.descriptionStructured?.reference?.text ??
+            tx.descriptionStructured?.text ??
+            tx.description;
+          const endToEndId = tx.descriptionStructured?.reference?.endToEndRef;
+
+          // parse dates — mt940-js returns "YYMMDD" strings
+          function parseMT940Date(d: string): Date {
+            if (!d || d.length < 6) return new Date();
+            const yy = parseInt(d.slice(0, 2), 10);
+            const mm = parseInt(d.slice(2, 4), 10) - 1;
+            const dd = parseInt(d.slice(4, 6), 10);
+            return new Date(2000 + yy, mm, dd);
+          }
+
+          const bookingDate = parseMT940Date(tx.entryDate);
+          const valueDate = parseMT940Date(tx.valueDate);
 
           try {
             await prisma.transaction.create({
@@ -219,19 +246,19 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
                 userId: connection.userId,
                 bankAccountId: account.id,
                 externalId,
-                valueDate: tx.valueDate ?? tx.bookingDate ?? new Date(),
-                bookingDate: tx.bookingDate ?? new Date(),
+                valueDate,
+                bookingDate,
                 amountCents,
                 type,
-                creditorName: tx.name ?? undefined,
-                creditorIban: tx.iban ?? undefined,
-                purpose: tx.description ?? undefined,
-                endToEndId: tx.endToEndId ?? undefined,
+                creditorName,
+                creditorIban,
+                purpose,
+                endToEndId,
               },
             });
             totalNew++;
           } catch {
-            // duplicate — skip
+            // unique constraint violation = duplicate, skip
           }
         }
       }

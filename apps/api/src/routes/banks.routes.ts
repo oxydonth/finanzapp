@@ -56,7 +56,11 @@ router.get('/connections', authenticate, async (req: AuthRequest, res, next) => 
       include: { accounts: { where: { isHidden: false } } },
       orderBy: { createdAt: 'asc' },
     });
-    const safe = connections.map(({ pinEncrypted: _, pinIv: __, loginNameEncrypted: ___, ...c }) => c);
+    const safe = connections.map((conn) => {
+      const { pinEncrypted: _p, pinIv: _iv, loginNameEncrypted: _ln, ...c } = conn as typeof conn & { pinEncrypted: string; pinIv: string; loginNameEncrypted: string };
+      void _p; void _iv; void _ln;
+      return c;
+    });
     res.json({ data: safe });
   } catch (e) { next(e); }
 });
@@ -69,7 +73,7 @@ router.get('/connections/:id', authenticate, async (req: AuthRequest, res, next)
     });
     if (!conn) throw new NotFoundError('BankConnection');
     if (conn.userId !== req.userId) throw new ForbiddenError();
-    const { pinEncrypted: _, pinIv: __, loginNameEncrypted: ___, ...safe } = conn;
+    const { pinEncrypted: _p, pinIv: _iv, loginNameEncrypted: _ln, ...safe } = conn;
     res.json({ data: safe });
   } catch (e) { next(e); }
 });

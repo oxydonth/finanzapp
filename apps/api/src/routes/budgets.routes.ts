@@ -18,7 +18,7 @@ router.get('/', authenticate, async (req: AuthRequest, res, next) => {
     const to = endOfCurrentMonth();
 
     const withSpend = await Promise.all(
-      budgets.map(async (b) => {
+      budgets.map(async (b: typeof budgets[number]) => {
         const agg = await prisma.transaction.aggregate({
           where: {
             userId: req.userId!,

@@ -51,7 +51,7 @@ export const GERMAN_BANKS: Record<string, BankRegistryEntry> = {
     logoColor: '#FFCC33',
   },
 
-  // ── Sparkasse (representative BLZs — regional institutes use same URL pattern) ─
+  // ── Sparkasse ─────────────────────────────────────────────────────────────
   '20050550': {
     blz: '20050550',
     name: 'Hamburger Sparkasse (Haspa)',
@@ -72,7 +72,7 @@ export const GERMAN_BANKS: Record<string, BankRegistryEntry> = {
   },
   '37050198': {
     blz: '37050198',
-    name: 'Stadtsparkasse Köln',
+    name: 'Sparkasse KölnBonn',
     shortName: 'Sparkasse',
     fintsUrl: 'https://www.sparkasse-koelnbonn.de/fints',
     fintsVersion: '300',
@@ -81,15 +81,15 @@ export const GERMAN_BANKS: Record<string, BankRegistryEntry> = {
   },
   '60050101': {
     blz: '60050101',
-    name: 'Sparkasse Baden-Württemberg',
+    name: 'Baden-Württembergische Bank (BW-Bank)',
     shortName: 'Sparkasse',
-    fintsUrl: 'https://www.sparkasse-bw.de/fints',
+    fintsUrl: 'https://www.bw-bank.de/fints',
     fintsVersion: '300',
     supportedTanMethods: [TanMethod.PUSHTAN, TanMethod.CHIPTAN_OPTIC, TanMethod.SMSTAN],
     logoColor: '#FF0000',
   },
 
-  // ── Volksbank / Raiffeisenbank (VR-NetWorld) ──────────────────────────────
+  // ── Volksbank / Raiffeisenbank ─────────────────────────────────────────────
   '20190003': {
     blz: '20190003',
     name: 'Volksbank Hamburg',
@@ -154,18 +154,18 @@ export const GERMAN_BANKS: Record<string, BankRegistryEntry> = {
   },
 
   // ── Postbank ──────────────────────────────────────────────────────────────
-  '20010020': {
-    blz: '20010020',
-    name: 'Postbank Hamburg',
+  '44010046': {
+    blz: '44010046',
+    name: 'Postbank Dortmund',
     shortName: 'Postbank',
     fintsUrl: 'https://banking.postbank.de/fints',
     fintsVersion: '300',
     supportedTanMethods: [TanMethod.PUSHTAN, TanMethod.CHIPTAN_OPTIC, TanMethod.SMSTAN],
     logoColor: '#FFCC00',
   },
-  '10010010': {
-    blz: '10010010',
-    name: 'Postbank Berlin',
+  '43010060': {
+    blz: '43010060',
+    name: 'Postbank Frankfurt',
     shortName: 'Postbank',
     fintsUrl: 'https://banking.postbank.de/fints',
     fintsVersion: '300',

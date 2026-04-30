@@ -6,17 +6,18 @@ const router = Router();
 
 router.get('/net-worth', authenticate, async (req: AuthRequest, res, next) => {
   try {
-    const accounts = await prisma.bankAccount.findMany({
-      where: { userId: req.userId!, isHidden: false },
-      select: { accountType: true, balanceCents: true, currency: true },
-    });
+    const accounts: Array<{ accountType: string; balanceCents: bigint }> =
+      await prisma.bankAccount.findMany({
+        where: { userId: req.userId!, isHidden: false },
+        select: { accountType: true, balanceCents: true },
+      });
 
     const assets = accounts
-      .filter((a) => !['LOAN', 'CREDIT_CARD'].includes(a.accountType))
-      .reduce((s, a) => s + Number(a.balanceCents), 0);
+      .filter((a: { accountType: string; balanceCents: bigint }) => !['LOAN', 'CREDIT_CARD'].includes(a.accountType))
+      .reduce((s: number, a: { accountType: string; balanceCents: bigint }) => s + Number(a.balanceCents), 0);
     const liabilities = accounts
-      .filter((a) => ['LOAN', 'CREDIT_CARD'].includes(a.accountType))
-      .reduce((s, a) => s + Math.abs(Number(a.balanceCents)), 0);
+      .filter((a: { accountType: string; balanceCents: bigint }) => ['LOAN', 'CREDIT_CARD'].includes(a.accountType))
+      .reduce((s: number, a: { accountType: string; balanceCents: bigint }) => s + Math.abs(Number(a.balanceCents)), 0);
 
     res.json({ data: { assets, liabilities, netWorth: assets - liabilities } });
   } catch (e) { next(e); }
