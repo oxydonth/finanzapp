@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    name: Build & Lint API
+    name: Build, Lint & Test API
     runs-on: ubuntu-latest
 
     services:
@@ -41,9 +41,6 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: npm install
-        run: npm install
 
       - name: Install dependencies
         run: npm ci
@@ -66,6 +63,21 @@ jobs:
         working-directory: apps/api
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/finanzapp_test
+
+      - name: Test packages/utils
+        run: npm test --workspace=packages/utils
+
+      - name: Test packages/config
+        run: npm test --workspace=packages/config
+
+      - name: Test apps/api
+        run: npm test --workspace=apps/api
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/finanzapp_test
+          JWT_SECRET: ci-test-secret-at-least-32-characters-long-for-jwt
+          JWT_REFRESH_SECRET: ci-test-refresh-secret-at-least-32-chars-long
+          ENCRYPTION_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
       - name: Build
         run: npm run build --workspace=@finanzapp/api
