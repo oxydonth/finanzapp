@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { formatEUR, formatDate } from '@finanzapp/utils';
 import type { Transaction } from '@finanzapp/types';
@@ -8,6 +9,7 @@ import type { Transaction } from '@finanzapp/types';
 interface TxPage { data: Transaction[]; total: number; totalPages: number; page: number }
 
 export default function TransaktionenPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [type, setType] = useState('');
@@ -22,12 +24,12 @@ export default function TransaktionenPage() {
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Transaktionen</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('transactions.title')}</h1>
 
       <div className="flex gap-3 mb-6">
         <input
           type="text"
-          placeholder="Suchen..."
+          placeholder={t('transactions.search')}
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -37,26 +39,26 @@ export default function TransaktionenPage() {
           onChange={(e) => { setType(e.target.value); setPage(1); }}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
-          <option value="">Alle</option>
-          <option value="CREDIT">Einnahmen</option>
-          <option value="DEBIT">Ausgaben</option>
+          <option value="">{t('transactions.all')}</option>
+          <option value="CREDIT">{t('transactions.income')}</option>
+          <option value="DEBIT">{t('transactions.expenses')}</option>
         </select>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="flex justify-center items-center h-48 text-gray-400">Laden...</div>
+          <div className="flex justify-center items-center h-48 text-gray-400">{t('transactions.loading')}</div>
         ) : transactions.length === 0 ? (
-          <div className="flex justify-center items-center h-48 text-gray-400">Keine Transaktionen gefunden</div>
+          <div className="flex justify-center items-center h-48 text-gray-400">{t('transactions.noTransactions')}</div>
         ) : (
           <>
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Datum</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Empfänger / Absender</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Kategorie</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Betrag</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('transactions.date')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('transactions.recipientSender')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('transactions.category')}</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('transactions.amount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -85,9 +87,9 @@ export default function TransaktionenPage() {
             </table>
             {data && data.totalPages > 1 && (
               <div className="flex justify-center items-center gap-3 py-4 border-t border-gray-100">
-                <button onClick={() => setPage(page - 1)} disabled={page <= 1} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40">Zurück</button>
-                <span className="text-sm text-gray-500">Seite {page} von {data.totalPages}</span>
-                <button onClick={() => setPage(page + 1)} disabled={page >= data.totalPages} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40">Weiter</button>
+                <button onClick={() => setPage(page - 1)} disabled={page <= 1} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40">{t('transactions.previous')}</button>
+                <span className="text-sm text-gray-500">{t('transactions.page', { page, total: data.totalPages })}</span>
+                <button onClick={() => setPage(page + 1)} disabled={page >= data.totalPages} className="px-3 py-1 text-sm border rounded-lg disabled:opacity-40">{t('transactions.next')}</button>
               </div>
             )}
           </>

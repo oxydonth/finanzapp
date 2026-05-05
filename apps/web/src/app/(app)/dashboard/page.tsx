@@ -1,5 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { formatEUR, formatDate } from '@finanzapp/utils';
 import type { BankAccount, Transaction, Budget } from '@finanzapp/types';
@@ -7,6 +8,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import Link from 'next/link';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
+
   const { data: netWorth } = useQuery({
     queryKey: ['net-worth'],
     queryFn: () => api.get<{ assets: number; liabilities: number; netWorth: number }>('/analytics/net-worth'),
@@ -39,14 +42,14 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Übersicht</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('dashboard.title')}</h1>
 
       {/* Net worth */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { label: 'Nettovermögen', value: netWorth?.netWorth ?? 0, color: 'text-brand-600' },
-          { label: 'Vermögen', value: netWorth?.assets ?? 0, color: 'text-green-600' },
-          { label: 'Verbindlichkeiten', value: netWorth?.liabilities ?? 0, color: 'text-red-500' },
+          { label: t('dashboard.netWorth'), value: netWorth?.netWorth ?? 0, color: 'text-brand-600' },
+          { label: t('dashboard.assets'), value: netWorth?.assets ?? 0, color: 'text-green-600' },
+          { label: t('dashboard.liabilities'), value: netWorth?.liabilities ?? 0, color: 'text-red-500' },
         ].map((c) => (
           <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <p className="text-sm text-gray-500 mb-1">{c.label}</p>
@@ -58,14 +61,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Cash flow chart */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">Cashflow (6 Monate)</h2>
+          <h2 className="text-base font-semibold mb-4">{t('dashboard.cashflow6m')}</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={flowData}>
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}€`} />
               <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-              <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} name="Einnahmen" />
-              <Bar dataKey="expenses" fill="#f87171" radius={[4, 4, 0, 0]} name="Ausgaben" />
+              <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} name={t('dashboard.income')} />
+              <Bar dataKey="expenses" fill="#f87171" radius={[4, 4, 0, 0]} name={t('dashboard.expenses')} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -73,8 +76,8 @@ export default function DashboardPage() {
         {/* Budgets */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold">Budgets</h2>
-            <Link href="/budget" className="text-sm text-brand-600 hover:underline">Alle anzeigen</Link>
+            <h2 className="text-base font-semibold">{t('dashboard.budgets')}</h2>
+            <Link href="/budget" className="text-sm text-brand-600 hover:underline">{t('dashboard.showAll')}</Link>
           </div>
           <div className="space-y-3">
             {budgetList.slice(0, 4).map((b) => (
@@ -91,7 +94,12 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
-            {budgetList.length === 0 && <p className="text-sm text-gray-400">Noch keine Budgets. <Link href="/budget" className="text-brand-600">Budget erstellen</Link></p>}
+            {budgetList.length === 0 && (
+              <p className="text-sm text-gray-400">
+                {t('dashboard.noBudgets')}{' '}
+                <Link href="/budget" className="text-brand-600">{t('dashboard.createBudget')}</Link>
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -99,8 +107,8 @@ export default function DashboardPage() {
       {/* Accounts */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">Konten</h2>
-          <Link href="/konten" className="text-sm text-brand-600 hover:underline">Alle anzeigen</Link>
+          <h2 className="text-base font-semibold">{t('nav.accounts')}</h2>
+          <Link href="/konten" className="text-sm text-brand-600 hover:underline">{t('dashboard.showAll')}</Link>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {accounts.slice(0, 4).map((a) => (
@@ -116,8 +124,8 @@ export default function DashboardPage() {
       {/* Recent transactions */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">Letzte Transaktionen</h2>
-          <Link href="/transaktionen" className="text-sm text-brand-600 hover:underline">Alle anzeigen</Link>
+          <h2 className="text-base font-semibold">{t('dashboard.recentTransactions')}</h2>
+          <Link href="/transaktionen" className="text-sm text-brand-600 hover:underline">{t('dashboard.showAll')}</Link>
         </div>
         <div className="space-y-3">
           {transactions.map((tx) => (
@@ -125,7 +133,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <span className="text-lg">{tx.category?.icon ?? '💳'}</span>
                 <div>
-                  <p className="text-sm font-medium">{tx.merchantName ?? tx.creditorName ?? tx.purpose ?? 'Unbekannt'}</p>
+                  <p className="text-sm font-medium">{tx.merchantName ?? tx.creditorName ?? tx.purpose ?? t('dashboard.unknown')}</p>
                   <p className="text-xs text-gray-400">{formatDate(tx.bookingDate)}</p>
                 </div>
               </div>

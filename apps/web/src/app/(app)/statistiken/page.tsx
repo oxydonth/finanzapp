@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { formatEUR } from '@finanzapp/utils';
 import {
@@ -14,14 +15,6 @@ type CashFlowEntry = { month: string; income: number; expenses: number; savings:
 type BreakdownEntry = { id: string; name: string; icon?: string | null; color?: string | null; total: number };
 type NetWorth = { assets: number; liabilities: number; netWorth: number };
 
-const RANGES = [
-  { label: 'Diesen Monat', months: 1 },
-  { label: 'Letzte 3 Monate', months: 3 },
-  { label: 'Letzte 6 Monate', months: 6 },
-  { label: 'Dieses Jahr', months: 12 },
-  { label: 'Gesamt', months: 0 },
-] as const;
-
 function rangeParams(months: number): string {
   if (months === 0) return '';
   const to = new Date();
@@ -33,8 +26,17 @@ function rangeParams(months: number): string {
 export default function StatistikenPage() {
   const router = useRouter();
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const [rangeMonths, setRangeMonths] = useState(6);
   const [toast, setToast] = useState<string | null>(null);
+
+  const RANGES = [
+    { label: t('statistics.thisMonth'), months: 1 },
+    { label: t('statistics.last3Months'), months: 3 },
+    { label: t('statistics.last6Months'), months: 6 },
+    { label: t('statistics.thisYear'), months: 12 },
+    { label: t('statistics.total'), months: 0 },
+  ] as const;
 
   const { data: cashFlow = [] } = useQuery<CashFlowEntry[]>({
     queryKey: ['cash-flow-12'],
@@ -56,7 +58,7 @@ export default function StatistikenPage() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['spending-breakdown'] });
       qc.invalidateQueries({ queryKey: ['transactions'] });
-      setToast(`${res.count} Transaktion${res.count !== 1 ? 'en' : ''} kategorisiert`);
+      setToast(t('statistics.categorized', { count: res.count }));
       setTimeout(() => setToast(null), 4000);
     },
   });
@@ -97,7 +99,7 @@ export default function StatistikenPage() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Statistiken</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('statistics.title')}</h1>
         <div className="flex items-center gap-3">
           <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
             {RANGES.map((r) => (
@@ -115,7 +117,7 @@ export default function StatistikenPage() {
             disabled={autoCategorize.isPending}
             className="px-4 py-1.5 rounded-lg bg-brand-600 text-white text-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
           >
-            {autoCategorize.isPending ? 'Läuft…' : 'Auto-kategorisieren'}
+            {autoCategorize.isPending ? t('statistics.running') : t('statistics.autoCategorize')}
           </button>
         </div>
       </div>
@@ -128,18 +130,18 @@ export default function StatistikenPage() {
 
       {uncategorized && (
         <div className="mb-6 flex items-center justify-between px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
-          <span>{formatEUR(uncategorized.total)} unkategorisiert</span>
-          <Link href="/kategorien" className="font-medium underline underline-offset-2">Regeln erstellen →</Link>
+          <span>{t('statistics.uncategorized_amount', { amount: formatEUR(uncategorized.total) })}</span>
+          <Link href="/kategorien" className="font-medium underline underline-offset-2">{t('statistics.createRules')}</Link>
         </div>
       )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Ausgaben', value: totalExpenses, color: 'text-red-500' },
-          { label: 'Einnahmen', value: totalIncome, color: 'text-green-600' },
-          { label: 'Ersparnis', value: totalSavings, color: totalSavings >= 0 ? 'text-brand-600' : 'text-red-500' },
-          { label: 'Vermögen', value: (netWorthData?.netWorth ?? 0) / 100, color: 'text-emerald-600' },
+          { label: t('statistics.expenses'), value: totalExpenses, color: 'text-red-500' },
+          { label: t('statistics.income'), value: totalIncome, color: 'text-green-600' },
+          { label: t('statistics.savings'), value: totalSavings, color: totalSavings >= 0 ? 'text-brand-600' : 'text-red-500' },
+          { label: t('statistics.assets'), value: (netWorthData?.netWorth ?? 0) / 100, color: 'text-emerald-600' },
         ].map((c) => (
           <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <p className="text-sm text-gray-500 mb-1">{c.label}</p>
@@ -151,21 +153,21 @@ export default function StatistikenPage() {
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Cash flow */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">Cashflow (12 Monate)</h2>
+          <h2 className="text-base font-semibold mb-4">{t('statistics.cashflow12m')}</h2>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={flowData}>
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
               <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-              <Bar dataKey="income" fill="#22c55e" name="Einnahmen" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="expenses" fill="#f87171" name="Ausgaben" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="income" fill="#22c55e" name={t('statistics.income')} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="expenses" fill="#f87171" name={t('statistics.expenses')} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Spending pie */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">Ausgaben nach Kategorie</h2>
+          <h2 className="text-base font-semibold mb-4">{t('statistics.expensesByCategory')}</h2>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -193,13 +195,13 @@ export default function StatistikenPage() {
 
       {/* Savings trend */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <h2 className="text-base font-semibold mb-4">Sparrate (12 Monate)</h2>
+        <h2 className="text-base font-semibold mb-4">{t('statistics.savingsRate12m')}</h2>
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={flowData}>
             <XAxis dataKey="month" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
             <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-            <Line type="monotone" dataKey="savings" stroke="#6366f1" strokeWidth={2} dot={false} name="Ersparnis" />
+            <Line type="monotone" dataKey="savings" stroke="#6366f1" strokeWidth={2} dot={false} name={t('statistics.savings')} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -207,27 +209,27 @@ export default function StatistikenPage() {
       {/* Wealth trend */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="text-base font-semibold">Vermögensentwicklung (12 Monate)</h2>
+          <h2 className="text-base font-semibold">{t('statistics.wealthTrend12m')}</h2>
           {wealthDelta !== null && (
             <span className={`text-sm font-medium ${wealthDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
               {wealthDelta >= 0 ? '▲' : '▼'} {formatEUR(Math.abs(wealthDelta) * 100)}
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-400 mb-4">Geschätzter Verlauf auf Basis monatlicher Cashflows</p>
+        <p className="text-xs text-gray-400 mb-4">{t('statistics.estimatedTrend')}</p>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={wealthTrend}>
             <XAxis dataKey="month" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
             <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-            <Line type="monotone" dataKey="netWorth" stroke="#10b981" strokeWidth={2} dot={false} name="Vermögen" />
+            <Line type="monotone" dataKey="netWorth" stroke="#10b981" strokeWidth={2} dot={false} name={t('statistics.assets')} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* Category bar breakdown */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-semibold mb-4">Alle Kategorien</h2>
+        <h2 className="text-base font-semibold mb-4">{t('statistics.allCategories')}</h2>
         <div className="space-y-3">
           {breakdown.filter((d) => d.id !== 'other').map((cat) => {
             const max = breakdown.filter((d) => d.id !== 'other')[0]?.total ?? 1;
@@ -251,7 +253,7 @@ export default function StatistikenPage() {
             );
           })}
           {breakdown.filter((d) => d.id !== 'other').length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">Noch keine Ausgaben in diesem Zeitraum.</p>
+            <p className="text-sm text-gray-400 text-center py-4">{t('statistics.noExpenses')}</p>
           )}
         </div>
       </div>

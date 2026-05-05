@@ -2,26 +2,28 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 import {
   LayoutDashboard, CreditCard, ArrowLeftRight,
   Tag, Target, BarChart2, Building2, Settings, LogOut,
 } from 'lucide-react';
 
-const NAV = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Übersicht' },
-  { href: '/konten', icon: CreditCard, label: 'Konten' },
-  { href: '/transaktionen', icon: ArrowLeftRight, label: 'Transaktionen' },
-  { href: '/kategorien', icon: Tag, label: 'Kategorien' },
-  { href: '/budget', icon: Target, label: 'Budget' },
-  { href: '/statistiken', icon: BarChart2, label: 'Statistiken' },
-  { href: '/banken', icon: Building2, label: 'Banken' },
-  { href: '/einstellungen', icon: Settings, label: 'Einstellungen' },
-];
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
+  const { t } = useTranslation();
+
+  const NAV = [
+    { href: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { href: '/konten', icon: CreditCard, label: t('nav.accounts') },
+    { href: '/transaktionen', icon: ArrowLeftRight, label: t('nav.transactions') },
+    { href: '/kategorien', icon: Tag, label: t('nav.categories') },
+    { href: '/budget', icon: Target, label: t('nav.budget') },
+    { href: '/statistiken', icon: BarChart2, label: t('nav.statistics') },
+    { href: '/banken', icon: Building2, label: t('nav.banks') },
+    { href: '/einstellungen', icon: Settings, label: t('nav.settings') },
+  ];
 
   useEffect(() => {
     if (!user) router.replace('/login');
@@ -56,7 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors text-sm"
           >
             <LogOut className="w-4 h-4" />
-            Abmelden
+            {t('nav.logout')}
           </button>
         </div>
       </aside>

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
 import type { LoginResponse, MfaChallengeResponse } from '@finanzapp/types';
@@ -9,6 +10,7 @@ import type { LoginResponse, MfaChallengeResponse } from '@finanzapp/types';
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaToken, setMfaToken] = useState('');
@@ -32,7 +34,7 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen');
+      setError(err instanceof Error ? err.message : t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -47,7 +49,7 @@ export default function LoginPage() {
       setAuth(res.user, res.accessToken);
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ungültiger Code');
+      setError(err instanceof Error ? err.message : t('auth.invalidCode'));
     } finally {
       setLoading(false);
     }
@@ -58,14 +60,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         {step === 'credentials' ? (
           <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Willkommen zurück</h1>
-            <p className="text-gray-500 mb-8">Melde dich bei Finanzapp an</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.welcomeBack')}</h1>
+            <p className="text-gray-500 mb-8">{t('auth.signInSubtitle')}</p>
 
             {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
 
             <form onSubmit={handleCredentials} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
                 <input
                   type="email"
                   value={email}
@@ -75,7 +77,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
                 <input
                   type="password"
                   value={password}
@@ -89,27 +91,25 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
               >
-                {loading ? 'Anmelden...' : 'Anmelden'}
+                {loading ? t('auth.signingIn') : t('auth.signIn')}
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Noch kein Konto?{' '}
-              <Link href="/register" className="text-brand-600 font-medium hover:underline">Registrieren</Link>
+              {t('auth.noAccount')}{' '}
+              <Link href="/register" className="text-brand-600 font-medium hover:underline">{t('auth.register')}</Link>
             </p>
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Zwei-Faktor-Authentifizierung</h1>
-            <p className="text-gray-500 mb-8">
-              Gib den 6-stelligen Code aus deinem Microsoft Authenticator ein oder einen Backup-Code.
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.twoFactor')}</h1>
+            <p className="text-gray-500 mb-8">{t('auth.twoFactorSubtitle')}</p>
 
             {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
 
             <form onSubmit={handleMfa} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Authentifizierungscode</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.authCode')}</label>
                 <input
                   type="text"
                   value={code}
@@ -128,7 +128,7 @@ export default function LoginPage() {
                 disabled={loading || code.length < 6}
                 className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
               >
-                {loading ? 'Überprüfen...' : 'Bestätigen'}
+                {loading ? t('auth.verifying') : t('auth.confirm')}
               </button>
             </form>
 
@@ -136,7 +136,7 @@ export default function LoginPage() {
               onClick={() => { setStep('credentials'); setError(''); setCode(''); }}
               className="w-full mt-3 text-sm text-gray-500 hover:text-gray-700 text-center"
             >
-              ← Zurück zur Anmeldung
+              {t('auth.backToLogin')}
             </button>
           </>
         )}

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../../../lib/api';
 import type { BankRegistryEntry } from '@finanzapp/config';
 import { Search, ChevronRight, Lock } from 'lucide-react';
@@ -10,6 +11,7 @@ type Step = 'select' | 'credentials' | 'tan' | 'done';
 
 export default function VerbindenPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('select');
   const [bankSearch, setBankSearch] = useState('');
   const [selectedBank, setSelectedBank] = useState<BankRegistryEntry | null>(null);
@@ -40,25 +42,25 @@ export default function VerbindenPage() {
     onSuccess: (res) => {
       if (res.sessionId) {
         setSessionId(res.sessionId);
-        setTanChallenge(res.tanChallenge ?? 'Bitte TAN eingeben');
+        setTanChallenge(res.tanChallenge ?? t('connectBank.enterTan'));
         setStep('tan');
       } else {
         setStep('done');
       }
     },
-    onError: (err) => setError(err instanceof Error ? err.message : 'Verbindung fehlgeschlagen'),
+    onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.connectionFailed')),
   });
 
   const tanMutation = useMutation({
     mutationFn: (t: string) =>
       api.post('/banks/connections/dummy/tan', { sessionId, tan: t }),
     onSuccess: () => setStep('done'),
-    onError: (err) => setError(err instanceof Error ? err.message : 'TAN fehlgeschlagen'),
+    onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.tanFailed')),
   });
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Bank verbinden</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('connectBank.title')}</h1>
       <div className="flex items-center gap-2 mb-8">
         {(['select', 'credentials', 'tan', 'done'] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
@@ -77,7 +79,7 @@ export default function VerbindenPage() {
           <div className="relative mb-4">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
             <input
-              placeholder="Bank oder BLZ suchen..."
+              placeholder={t('connectBank.searchPlaceholder')}
               value={bankSearch}
               onChange={(e) => setBankSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -92,7 +94,7 @@ export default function VerbindenPage() {
               >
                 <div>
                   <p className="font-medium text-gray-900">{bank.name}</p>
-                  <p className="text-xs text-gray-400">BLZ: {bank.blz}</p>
+                  <p className="text-xs text-gray-400">{t('banks.bankCode')} {bank.blz}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </button>
@@ -105,11 +107,11 @@ export default function VerbindenPage() {
         <div>
           <div className="bg-gray-50 rounded-xl p-4 mb-6">
             <p className="font-medium">{selectedBank.name}</p>
-            <p className="text-sm text-gray-500">BLZ: {selectedBank.blz}</p>
+            <p className="text-sm text-gray-500">{t('banks.bankCode')} {selectedBank.blz}</p>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername / Kontonummer</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('connectBank.username')}</label>
               <input
                 value={creds.loginName}
                 onChange={(e) => setCreds({ ...creds, loginName: e.target.value })}
@@ -117,7 +119,7 @@ export default function VerbindenPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Online-Banking PIN</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('connectBank.pin')}</label>
               <input
                 type="password"
                 value={creds.pin}
@@ -127,14 +129,14 @@ export default function VerbindenPage() {
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 rounded-lg p-3">
               <Lock className="w-3 h-3 shrink-0" />
-              Deine Zugangsdaten werden AES-256 verschlüsselt gespeichert und niemals im Klartext übertragen.
+              {t('connectBank.securityNote')}
             </div>
             <button
               onClick={() => connectMutation.mutate({ bankCode: selectedBank.blz, ...creds })}
               disabled={connectMutation.isPending || !creds.loginName || !creds.pin}
               className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
             >
-              {connectMutation.isPending ? 'Verbinden...' : 'Bank verbinden'}
+              {connectMutation.isPending ? t('connectBank.connecting') : t('connectBank.connect')}
             </button>
           </div>
         </div>
@@ -146,7 +148,7 @@ export default function VerbindenPage() {
           <input
             value={tan}
             onChange={(e) => setTan(e.target.value)}
-            placeholder="TAN eingeben"
+            placeholder={t('connectBank.enterTan')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           <button
@@ -154,7 +156,7 @@ export default function VerbindenPage() {
             disabled={tanMutation.isPending || !tan}
             className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
           >
-            {tanMutation.isPending ? 'Prüfen...' : 'TAN bestätigen'}
+            {tanMutation.isPending ? t('connectBank.verifyingTan') : t('connectBank.confirmTan')}
           </button>
         </div>
       )}
@@ -162,13 +164,13 @@ export default function VerbindenPage() {
       {step === 'done' && (
         <div className="text-center py-8">
           <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-xl font-bold mb-2">Bank erfolgreich verbunden!</h2>
-          <p className="text-gray-500 mb-6">Deine Konten werden jetzt synchronisiert.</p>
+          <h2 className="text-xl font-bold mb-2">{t('connectBank.successTitle')}</h2>
+          <p className="text-gray-500 mb-6">{t('connectBank.successDesc')}</p>
           <button
             onClick={() => router.push('/banken')}
             className="bg-brand-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-brand-700"
           >
-            Zu meinen Banken
+            {t('connectBank.goToBanks')}
           </button>
         </div>
       )}
