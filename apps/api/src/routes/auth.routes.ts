@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import * as authService from '../services/auth.service';
+import * as mfaService from '../services/mfa.service';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { verifyMfaToken } from '../utils/jwt';
+import { UnauthorizedError } from '../utils/errors';
 
 const router = Router();
 
@@ -52,6 +55,44 @@ router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
   try {
     const user = await authService.getProfile(req.userId!);
     res.json({ data: user });
+  } catch (e) { next(e); }
+});
+
+router.post('/mfa/complete', async (req, res, next) => {
+  try {
+    const { mfaToken, code } = z.object({ mfaToken: z.string(), code: z.string().min(1) }).parse(req.body);
+    let payload: { sub: string };
+    try {
+      payload = verifyMfaToken(mfaToken);
+    } catch {
+      throw new UnauthorizedError('Invalid or expired MFA token');
+    }
+    await mfaService.verifyMfaLogin(payload.sub, code);
+    const result = await authService.completeMfaLogin(payload.sub);
+    res.json({ data: result });
+  } catch (e) { next(e); }
+});
+
+router.post('/mfa/setup', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const result = await mfaService.setupMfa(req.userId!);
+    res.json({ data: result });
+  } catch (e) { next(e); }
+});
+
+router.post('/mfa/enable', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { code } = z.object({ code: z.string().min(1) }).parse(req.body);
+    const result = await mfaService.enableMfa(req.userId!, code);
+    res.json({ data: result });
+  } catch (e) { next(e); }
+});
+
+router.post('/mfa/disable', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { code } = z.object({ code: z.string().min(1) }).parse(req.body);
+    await mfaService.disableMfa(req.userId!, code);
+    res.json({ data: { message: 'MFA disabled' } });
   } catch (e) { next(e); }
 });
 

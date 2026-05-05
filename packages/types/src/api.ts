@@ -28,6 +28,20 @@ export interface LoginResponse {
   user: import('./models').User;
 }
 
+export interface MfaChallengeResponse {
+  requiresMfa: true;
+  mfaToken: string;
+}
+
+export interface MfaSetupResponse {
+  secret: string;
+  qrCodeDataUrl: string;
+}
+
+export interface MfaEnableResponse {
+  backupCodes: string[];
+}
+
 export interface RegisterRequest {
   email: string;
   password: string;

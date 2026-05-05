@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
+import { signAccessToken, signRefreshToken, signMfaToken, verifyRefreshToken } from '../utils/jwt';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../utils/errors';
 
 export async function register(
@@ -15,7 +15,7 @@ export async function register(
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: { email, passwordHash, firstName, lastName },
-    select: { id: true, email: true, firstName: true, lastName: true, currency: true, locale: true, isEmailVerified: true, createdAt: true, updatedAt: true },
+    select: { id: true, email: true, firstName: true, lastName: true, currency: true, locale: true, isEmailVerified: true, mfaEnabled: true, createdAt: true, updatedAt: true },
   });
 
   const accessToken = signAccessToken(user.id);
@@ -35,6 +35,10 @@ export async function login(email: string, password: string) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new UnauthorizedError('Invalid email or password');
 
+  if (user.mfaEnabled) {
+    return { requiresMfa: true as const, mfaToken: signMfaToken(user.id) };
+  }
+
   const accessToken = signAccessToken(user.id);
   const refreshToken = signRefreshToken(user.id);
   await prisma.user.update({
@@ -42,7 +46,22 @@ export async function login(email: string, password: string) {
     data: { refreshTokenHash: await bcrypt.hash(refreshToken, 8) },
   });
 
-  const { passwordHash: _, refreshTokenHash: __, ...safeUser } = user;
+  const { passwordHash: _, refreshTokenHash: __, totpSecret: ___, mfaBackupCodes: ____, ...safeUser } = user;
+  return { user: safeUser, accessToken, refreshToken };
+}
+
+export async function completeMfaLogin(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new UnauthorizedError();
+
+  const accessToken = signAccessToken(user.id);
+  const refreshToken = signRefreshToken(user.id);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 8) },
+  });
+
+  const { passwordHash: _, refreshTokenHash: __, totpSecret: ___, mfaBackupCodes: ____, ...safeUser } = user;
   return { user: safeUser, accessToken, refreshToken };
 }
 
@@ -80,7 +99,7 @@ export async function logout(userId: string) {
 export async function getProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, firstName: true, lastName: true, currency: true, locale: true, isEmailVerified: true, createdAt: true, updatedAt: true },
+    select: { id: true, email: true, firstName: true, lastName: true, currency: true, locale: true, isEmailVerified: true, mfaEnabled: true, createdAt: true, updatedAt: true },
   });
   if (!user) throw new NotFoundError('User');
   return user;

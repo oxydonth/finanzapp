@@ -17,3 +17,13 @@ export function signRefreshToken(userId: string): string {
 export function verifyRefreshToken(token: string): { sub: string } {
   return jwt.verify(token, env.JWT_REFRESH_SECRET) as { sub: string };
 }
+
+export function signMfaToken(userId: string): string {
+  return jwt.sign({ sub: userId, purpose: 'mfa' }, env.JWT_SECRET, { expiresIn: '5m' });
+}
+
+export function verifyMfaToken(token: string): { sub: string } {
+  const payload = jwt.verify(token, env.JWT_SECRET) as { sub: string; purpose: string };
+  if (payload.purpose !== 'mfa') throw new Error('Invalid token purpose');
+  return payload;
+}

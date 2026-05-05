@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { api } from '../../../lib/api';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 
 type CashFlowEntry = { month: string; income: number; expenses: number; savings: number };
 type BreakdownEntry = { id: string; name: string; icon?: string | null; color?: string | null; total: number };
+type NetWorth = { assets: number; liabilities: number; netWorth: number };
 
 const RANGES = [
   { label: 'Diesen Monat', months: 1 },
@@ -40,6 +41,11 @@ export default function StatistikenPage() {
     queryFn: () => api.get('/analytics/cash-flow?months=12'),
   });
 
+  const { data: netWorthData } = useQuery<NetWorth>({
+    queryKey: ['net-worth'],
+    queryFn: () => api.get('/analytics/net-worth'),
+  });
+
   const { data: breakdown = [] } = useQuery<BreakdownEntry[]>({
     queryKey: ['spending-breakdown', rangeMonths],
     queryFn: () => api.get(`/analytics/spending-breakdown${rangeParams(rangeMonths)}`),
@@ -54,6 +60,21 @@ export default function StatistikenPage() {
       setTimeout(() => setToast(null), 4000);
     },
   });
+
+  const wealthTrend = useMemo(() => {
+    if (!netWorthData || cashFlow.length === 0) return [];
+    let running = netWorthData.netWorth / 100;
+    const points: { month: string; netWorth: number }[] = [];
+    for (const entry of [...cashFlow].reverse()) {
+      points.unshift({ month: entry.month, netWorth: running });
+      running -= entry.savings / 100;
+    }
+    return points;
+  }, [cashFlow, netWorthData]);
+
+  const wealthDelta = wealthTrend.length >= 2
+    ? wealthTrend[wealthTrend.length - 1].netWorth - wealthTrend[0].netWorth
+    : null;
 
   const flowData = cashFlow.map((d) => ({
     ...d,
@@ -113,11 +134,12 @@ export default function StatistikenPage() {
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Ausgaben', value: totalExpenses, color: 'text-red-500' },
           { label: 'Einnahmen', value: totalIncome, color: 'text-green-600' },
           { label: 'Ersparnis', value: totalSavings, color: totalSavings >= 0 ? 'text-brand-600' : 'text-red-500' },
+          { label: 'Vermögen', value: (netWorthData?.netWorth ?? 0) / 100, color: 'text-emerald-600' },
         ].map((c) => (
           <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <p className="text-sm text-gray-500 mb-1">{c.label}</p>
@@ -178,6 +200,27 @@ export default function StatistikenPage() {
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
             <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
             <Line type="monotone" dataKey="savings" stroke="#6366f1" strokeWidth={2} dot={false} name="Ersparnis" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Wealth trend */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="flex items-start justify-between mb-1">
+          <h2 className="text-base font-semibold">Vermögensentwicklung (12 Monate)</h2>
+          {wealthDelta !== null && (
+            <span className={`text-sm font-medium ${wealthDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+              {wealthDelta >= 0 ? '▲' : '▼'} {formatEUR(Math.abs(wealthDelta) * 100)}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mb-4">Geschätzter Verlauf auf Basis monatlicher Cashflows</p>
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={wealthTrend}>
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
+            <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
+            <Line type="monotone" dataKey="netWorth" stroke="#10b981" strokeWidth={2} dot={false} name="Vermögen" />
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -8,6 +8,7 @@ export interface User {
   currency: string;
   locale: string;
   isEmailVerified: boolean;
+  mfaEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
