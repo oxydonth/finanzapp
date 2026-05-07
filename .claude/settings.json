@@ -1,7 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e *)"
+      "Bash(node -e *)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(psql -h localhost -U postgres -lqt)",
+      "Bash(redis-cli -h localhost -p 6379 ping)",
+      "Bash(brew services *)",
+      "Bash(docker info *)",
+      "Bash(nc -z localhost 5432)",
+      "Bash(nc -z localhost 6379)",
+      "Bash(timeout 5 node apps/api/dist/index.js)",
+      "Bash(node /Users/maxbielka/finanzapp/apps/api/dist/index.js)",
+      "Bash(echo \"API_PID=$!\")",
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(git -C /Users/maxbielka/finanzapp add -A)",
+      "Bash(git -C /Users/maxbielka/finanzapp status)",
+      "Bash(git -C /Users/maxbielka/finanzapp restore --staged .claude/settings.json)"
     ]
   }
 }
