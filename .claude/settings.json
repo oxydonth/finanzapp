@@ -15,7 +15,10 @@
       "Bash(curl -s http://localhost:3001)",
       "Bash(git -C /Users/maxbielka/finanzapp add -A)",
       "Bash(git -C /Users/maxbielka/finanzapp status)",
-      "Bash(git -C /Users/maxbielka/finanzapp restore --staged .claude/settings.json)"
+      "Bash(git -C /Users/maxbielka/finanzapp restore --staged .claude/settings.json)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
