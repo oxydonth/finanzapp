@@ -2,6 +2,7 @@
   "name": "@finanzapp/api",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
