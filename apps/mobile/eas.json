@@ -15,7 +15,7 @@
       "ios": { "simulator": false }
     },
     "production": {
-      "android": { "buildType": "aab" },
+      "android": { "buildType": "app-bundle" },
       "ios": {}
     }
   },
