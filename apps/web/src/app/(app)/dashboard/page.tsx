@@ -157,7 +157,7 @@ export default function DashboardPage() {
           ))}
           {accounts.length === 0 && (
             <div className="col-span-2 text-center py-8 text-slate-400 text-sm">
-              <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700">Bank verbinden →</Link>
+              <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700">{t('dashboard.connectBank')}</Link>
             </div>
           )}
         </div>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
             </div>
           ))}
           {transactions.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-6">Keine Transaktionen vorhanden.</p>
+            <p className="text-sm text-slate-400 text-center py-6">{t('dashboard.noTransactions')}</p>
           )}
         </div>
       </div>

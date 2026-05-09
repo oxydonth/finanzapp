@@ -23,7 +23,9 @@
     "noBudgets": "Noch keine Budgets.",
     "createBudget": "Budget erstellen",
     "recentTransactions": "Letzte Transaktionen",
-    "unknown": "Unbekannt"
+    "unknown": "Unbekannt",
+    "noTransactions": "Keine Transaktionen vorhanden.",
+    "connectBank": "Bank verbinden →"
   },
   "auth": {
     "welcomeBack": "Willkommen zurück",
@@ -183,7 +185,8 @@
     "never": "Noch nie",
     "sync": "Synchronisieren",
     "disconnect": "Bank trennen",
-    "disconnectConfirm": "Bank trennen?"
+    "disconnectConfirm": "Bank trennen?",
+    "noBanksFound": "Keine Banken gefunden."
   },
   "connectBank": {
     "title": "Bank verbinden",

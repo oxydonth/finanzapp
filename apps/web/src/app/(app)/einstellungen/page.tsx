@@ -158,7 +158,9 @@ export default function EinstellungenPage() {
           onChange={(e) => {
             const code = e.target.value;
             i18n.changeLanguage(code);
-            api.patch('/users/me', { locale: code }).catch(() => {});
+            api.patch<User>('/users/me', { locale: code })
+              .then((updated) => setAuth(updated, getAccessToken()!, getRefreshToken()!))
+              .catch(() => {});
           }}
           className="input"
         >

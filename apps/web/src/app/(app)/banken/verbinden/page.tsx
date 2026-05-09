@@ -116,7 +116,7 @@ export default function VerbindenPage() {
               </button>
             ))}
             {filtered.length === 0 && (
-              <p className="text-sm text-slate-400 text-center py-8">Keine Banken gefunden.</p>
+              <p className="text-sm text-slate-400 text-center py-8">{t('banks.noBanksFound')}</p>
             )}
           </div>
         </div>

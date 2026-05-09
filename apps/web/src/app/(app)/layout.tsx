@@ -17,12 +17,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const localeSynced = useRef(false);
 
-  // Apply user's saved locale on first load, unless user has manually chosen a language
+  // Sync user's locale from DB on first load — overrides browser/OS detection
   useEffect(() => {
     if (!user?.locale || localeSynced.current) return;
-    const manualChoice = typeof window !== 'undefined' && localStorage.getItem('i18nextLng');
-    if (!manualChoice) {
-      const code = user.locale.split('-')[0];
+    const code = user.locale.split('-')[0];
+    if (i18n.language.split('-')[0] !== code) {
       i18n.changeLanguage(code);
     }
     localeSynced.current = true;
