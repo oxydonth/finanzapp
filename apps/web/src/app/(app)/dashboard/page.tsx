@@ -6,6 +6,7 @@ import { formatEUR, formatDate } from '@finanzapp/utils';
 import type { BankAccount, Transaction, Budget } from '@finanzapp/types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Link from 'next/link';
+import { ArrowUpRight, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -40,62 +41,96 @@ export default function DashboardPage() {
     expenses: d.expenses / 100,
   })) : [];
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('dashboard.title')}</h1>
+  const statCards = [
+    {
+      label: t('dashboard.netWorth'),
+      value: netWorth?.netWorth ?? 0,
+      icon: Wallet,
+      iconBg: 'bg-brand-50',
+      iconColor: 'text-brand-600',
+      valueColor: 'text-brand-600',
+    },
+    {
+      label: t('dashboard.assets'),
+      value: netWorth?.assets ?? 0,
+      icon: TrendingUp,
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      valueColor: 'text-emerald-600',
+    },
+    {
+      label: t('dashboard.liabilities'),
+      value: netWorth?.liabilities ?? 0,
+      icon: TrendingDown,
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-500',
+      valueColor: 'text-rose-500',
+    },
+  ];
 
-      {/* Net worth */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {[
-          { label: t('dashboard.netWorth'), value: netWorth?.netWorth ?? 0, color: 'text-brand-600' },
-          { label: t('dashboard.assets'), value: netWorth?.assets ?? 0, color: 'text-green-600' },
-          { label: t('dashboard.liabilities'), value: netWorth?.liabilities ?? 0, color: 'text-red-500' },
-        ].map((c) => (
-          <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <p className="text-sm text-gray-500 mb-1">{c.label}</p>
-            <p className={`text-3xl font-bold ${c.color}`}>{formatEUR(c.value)}</p>
+  return (
+    <div className="p-8 max-w-7xl mx-auto animate-fade-in">
+      <h1 className="page-title mb-7">{t('dashboard.title')}</h1>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-3 gap-4 mb-7">
+        {statCards.map((c) => (
+          <div key={c.label} className="card p-6">
+            <div className="flex items-start justify-between mb-4">
+              <p className="text-sm text-slate-500">{c.label}</p>
+              <div className={`w-9 h-9 rounded-xl ${c.iconBg} flex items-center justify-center`}>
+                <c.icon className={`w-4.5 h-4.5 ${c.iconColor}`} size={18} />
+              </div>
+            </div>
+            <p className={`text-2xl font-bold tracking-tight ${c.valueColor}`}>{formatEUR(c.value)}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-2 gap-5 mb-5">
         {/* Cash flow chart */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">{t('dashboard.cashflow6m')}</h2>
+        <div className="card p-6">
+          <h2 className="section-title mb-5">{t('dashboard.cashflow6m')}</h2>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={flowData}>
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}€`} />
-              <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-              <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} name={t('dashboard.income')} />
-              <Bar dataKey="expenses" fill="#f87171" radius={[4, 4, 0, 0]} name={t('dashboard.expenses')} />
+            <BarChart data={flowData} barGap={3}>
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v}€`} axisLine={false} tickLine={false} width={48} />
+              <Tooltip
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                formatter={(v: number) => formatEUR(v * 100)}
+              />
+              <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} name={t('dashboard.income')} />
+              <Bar dataKey="expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} name={t('dashboard.expenses')} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Budgets */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold">{t('dashboard.budgets')}</h2>
-            <Link href="/budget" className="text-sm text-brand-600 hover:underline">{t('dashboard.showAll')}</Link>
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="section-title">{t('dashboard.budgets')}</h2>
+            <Link href="/budget" className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">
+              {t('dashboard.showAll')} <ArrowUpRight size={12} />
+            </Link>
           </div>
-          <div className="space-y-3">
-            {budgetList.slice(0, 4).map((b) => (
-              <div key={b.id}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{b.category?.icon} {b.name}</span>
-                  <span className="text-gray-500">{formatEUR(b.spentCents ?? 0)} / {formatEUR(b.limitCents)}</span>
+          <div className="space-y-4">
+            {budgetList.slice(0, 4).map((b) => {
+              const pct = b.progressPercent ?? 0;
+              const barColor = pct > 90 ? 'bg-rose-500' : pct > 70 ? 'bg-amber-400' : 'bg-emerald-500';
+              return (
+                <div key={b.id}>
+                  <div className="flex justify-between text-sm mb-1.5">
+                    <span className="text-slate-700 font-medium">{b.category?.icon} {b.name}</span>
+                    <span className="text-slate-400 text-xs">{formatEUR(b.spentCents ?? 0)} / {formatEUR(b.limitCents)}</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${(b.progressPercent ?? 0) > 90 ? 'bg-red-500' : (b.progressPercent ?? 0) > 70 ? 'bg-yellow-400' : 'bg-green-500'}`}
-                    style={{ width: `${b.progressPercent ?? 0}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {budgetList.length === 0 && (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-slate-400">
                 {t('dashboard.noBudgets')}{' '}
                 <Link href="/budget" className="text-brand-600">{t('dashboard.createBudget')}</Link>
               </p>
@@ -105,43 +140,59 @@ export default function DashboardPage() {
       </div>
 
       {/* Accounts */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">{t('nav.accounts')}</h2>
-          <Link href="/konten" className="text-sm text-brand-600 hover:underline">{t('dashboard.showAll')}</Link>
+      <div className="card p-6 mb-5">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="section-title">{t('nav.accounts')}</h2>
+          <Link href="/konten" className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">
+            {t('dashboard.showAll')} <ArrowUpRight size={12} />
+          </Link>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {accounts.slice(0, 4).map((a) => (
-            <div key={a.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-              <p className="text-sm text-gray-500 mb-1">{a.accountName}</p>
-              <p className="text-lg font-bold">{formatEUR(Number(a.balanceCents))}</p>
-              <p className="text-xs text-gray-400">{a.ibanMasked}</p>
+            <div key={a.id} className="border border-slate-100 rounded-xl p-4 hover:border-slate-200 hover:shadow-sm transition-all duration-150">
+              <p className="text-xs text-slate-400 mb-0.5">{a.accountName}</p>
+              <p className="text-lg font-bold text-slate-900 tracking-tight">{formatEUR(Number(a.balanceCents))}</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">{a.ibanMasked}</p>
             </div>
           ))}
+          {accounts.length === 0 && (
+            <div className="col-span-2 text-center py-8 text-slate-400 text-sm">
+              <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700">Bank verbinden →</Link>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Recent transactions */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">{t('dashboard.recentTransactions')}</h2>
-          <Link href="/transaktionen" className="text-sm text-brand-600 hover:underline">{t('dashboard.showAll')}</Link>
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="section-title">{t('dashboard.recentTransactions')}</h2>
+          <Link href="/transaktionen" className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">
+            {t('dashboard.showAll')} <ArrowUpRight size={12} />
+          </Link>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-1">
           {transactions.map((tx) => (
-            <div key={tx.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div key={tx.id} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-xl hover:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
-                <span className="text-lg">{tx.category?.icon ?? '💳'}</span>
+                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-base shrink-0">
+                  {tx.category?.icon ?? '💳'}
+                </div>
                 <div>
-                  <p className="text-sm font-medium">{tx.merchantName ?? tx.creditorName ?? tx.purpose ?? t('dashboard.unknown')}</p>
-                  <p className="text-xs text-gray-400">{formatDate(tx.bookingDate)}</p>
+                  <p className="text-sm font-medium text-slate-900 leading-tight">
+                    {tx.merchantName ?? tx.creditorName ?? tx.purpose ?? t('dashboard.unknown')}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">{formatDate(tx.bookingDate)}</p>
                 </div>
               </div>
-              <span className={`text-sm font-semibold ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-gray-900'}`}>
+              <span className={`text-sm font-semibold tabular-nums ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-slate-900'}`}>
                 {tx.type === 'CREDIT' ? '+' : ''}{formatEUR(Number(tx.amountCents))}
               </span>
             </div>
           ))}
+          {transactions.length === 0 && (
+            <p className="text-sm text-slate-400 text-center py-6">Keine Transaktionen vorhanden.</p>
+          )}
         </div>
       </div>
     </div>

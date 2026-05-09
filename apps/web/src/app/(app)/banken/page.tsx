@@ -5,7 +5,7 @@ import { api } from '../../../lib/api';
 import type { BankConnection } from '@finanzapp/types';
 import { formatDate } from '@finanzapp/utils';
 import Link from 'next/link';
-import { RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Building2 } from 'lucide-react';
 
 export default function BankenPage() {
   const qc = useQueryClient();
@@ -25,67 +25,77 @@ export default function BankenPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bank-connections'] }),
   });
 
-  const STATUS_COLOR: Record<string, string> = {
-    IDLE: 'bg-gray-100 text-gray-600',
-    SYNCING: 'bg-blue-100 text-blue-700',
-    SUCCESS: 'bg-green-100 text-green-700',
-    FAILED: 'bg-red-100 text-red-700',
-    TAN_REQUIRED: 'bg-yellow-100 text-yellow-700',
+  const STATUS: Record<string, { label: string; className: string }> = {
+    IDLE: { label: 'Inaktiv', className: 'badge-gray' },
+    SYNCING: { label: 'Synchronisiert', className: 'badge-blue' },
+    SUCCESS: { label: 'Verbunden', className: 'badge-green' },
+    FAILED: { label: 'Fehler', className: 'badge-red' },
+    TAN_REQUIRED: { label: 'TAN benötigt', className: 'badge-amber' },
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('banks.title')}</h1>
-        <Link
-          href="/banken/verbinden"
-          className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700"
-        >
-          <Plus className="w-4 h-4" /> {t('banks.connectBank')}
+    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
+      <div className="flex items-center justify-between mb-7">
+        <h1 className="page-title">{t('banks.title')}</h1>
+        <Link href="/banken/verbinden" className="btn-primary">
+          <Plus size={16} /> {t('banks.connectBank')}
         </Link>
       </div>
 
-      {isLoading && <div className="text-center text-gray-400 py-12">{t('banks.loading')}</div>}
+      {isLoading && (
+        <div className="flex justify-center items-center py-20 text-slate-400 text-sm">{t('banks.loading')}</div>
+      )}
+
       {!isLoading && connections.length === 0 && (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-5xl mb-4">🏦</p>
-          <p className="text-lg font-medium mb-2">{t('banks.noBanks')}</p>
-          <Link href="/banken/verbinden" className="text-brand-600 hover:underline text-sm">{t('banks.connectBankNow')}</Link>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-7 h-7 text-slate-400" />
+          </div>
+          <p className="text-slate-900 font-semibold mb-1">{t('banks.noBanks')}</p>
+          <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
+            {t('banks.connectBankNow')}
+          </Link>
         </div>
       )}
 
-      <div className="space-y-4">
-        {connections.map((conn) => (
-          <div key={conn.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-gray-900">{conn.bankName}</h3>
-              <p className="text-sm text-gray-500">{t('banks.bankCode')} {conn.bankCode}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {t('banks.lastSync')} {conn.lastSyncAt ? formatDate(conn.lastSyncAt) : t('banks.never')}
-              </p>
+      <div className="space-y-3">
+        {connections.map((conn) => {
+          const status = STATUS[conn.syncStatus] ?? { label: conn.syncStatus, className: 'badge-gray' };
+          return (
+            <div key={conn.id} className="card p-5 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                  <Building2 className="w-5 h-5 text-slate-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{conn.bankName}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {t('banks.bankCode')} {conn.bankCode} · {t('banks.lastSync')}{' '}
+                    {conn.lastSyncAt ? formatDate(conn.lastSyncAt) : t('banks.never')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={status.className}>{status.label}</span>
+                <button
+                  onClick={() => syncMutation.mutate(conn.id)}
+                  disabled={syncMutation.isPending}
+                  className="btn-ghost p-2 text-slate-400 hover:text-brand-600"
+                  title={t('banks.sync')}
+                >
+                  <RefreshCw size={15} className={syncMutation.isPending ? 'animate-spin' : ''} />
+                </button>
+                <button
+                  onClick={() => { if (confirm(t('banks.disconnectConfirm'))) deleteMutation.mutate(conn.id); }}
+                  className="btn-ghost p-2 text-slate-400 hover:text-rose-500"
+                  title={t('banks.disconnect')}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLOR[conn.syncStatus]}`}>
-                {conn.syncStatus}
-              </span>
-              <button
-                onClick={() => syncMutation.mutate(conn.id)}
-                disabled={syncMutation.isPending}
-                className="p-2 text-gray-400 hover:text-brand-600 hover:bg-gray-50 rounded-lg"
-                title={t('banks.sync')}
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => { if (confirm(t('banks.disconnectConfirm'))) deleteMutation.mutate(conn.id); }}
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
-                title={t('banks.disconnect')}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

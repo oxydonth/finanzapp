@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
@@ -8,9 +8,11 @@ import {
   LayoutDashboard, CreditCard, ArrowLeftRight,
   Tag, Target, BarChart2, Building2, Settings, LogOut,
 } from 'lucide-react';
+import { LogoMark } from '../../components/ui/Logo';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
   const { t } = useTranslation();
 
@@ -31,38 +33,64 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
+  const initials = `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase();
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <span className="text-xl font-bold text-brand-600">Finanzapp</span>
+    <div className="flex h-screen bg-slate-50">
+      <aside className="w-64 shrink-0 bg-slate-950 flex flex-col">
+        {/* Logo */}
+        <div className="px-4 py-5 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2.5">
+            <LogoMark size={28} />
+            <span className="text-[14px] font-semibold text-white tracking-tight">Finanzapp</span>
+          </div>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV.map(({ href, icon: Icon, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              <span className="text-sm font-medium">{label}</span>
-            </Link>
-          ))}
+
+        {/* Nav */}
+        <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
+          {NAV.map(({ href, icon: Icon, label }) => {
+            const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  active
+                    ? 'bg-brand-500/20 text-brand-300 shadow-sm'
+                    : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-100'
+                }`}
+              >
+                <Icon size={16} className={`shrink-0 ${active ? 'text-brand-400' : ''}`} />
+                {label}
+              </Link>
+            );
+          })}
         </nav>
-        <div className="px-3 py-4 border-t border-gray-100">
-          <div className="px-3 py-2 mb-1 text-sm text-gray-500">
-            {user.firstName} {user.lastName}
+
+        {/* User */}
+        <div className="px-2.5 py-3 border-t border-white/[0.06]">
+          <div className="flex items-center gap-3 px-3 py-2 mb-1">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-300 truncate">{user.firstName} {user.lastName}</p>
+              <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+            </div>
           </div>
           <button
             onClick={() => { clearAuth(); router.push('/login'); }}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors text-sm"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-white/[0.06] transition-all duration-150 text-sm font-medium"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut size={16} />
             {t('nav.logout')}
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto">{children}</main>
+
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
     </div>
   );
 }

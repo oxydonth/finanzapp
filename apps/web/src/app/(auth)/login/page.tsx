@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
 import type { LoginResponse, MfaChallengeResponse } from '@finanzapp/types';
+import { ArrowLeft } from 'lucide-react';
+import { Logo } from '../../../components/ui/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -56,90 +58,116 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        {step === 'credentials' ? (
-          <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.welcomeBack')}</h1>
-            <p className="text-gray-500 mb-8">{t('auth.signInSubtitle')}</p>
+    <div className="min-h-screen flex">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex w-[420px] bg-slate-950 flex-col p-10 shrink-0">
+        <Link href="/" className="mb-auto">
+          <Logo markSize={30} textClass="text-[15px] text-white" dark />
+        </Link>
+        <div className="mt-auto">
+          <blockquote className="text-slate-300 text-lg font-medium leading-relaxed mb-4">
+            "Endlich alle Konten auf einen Blick – ohne zwischen 5 Apps zu wechseln."
+          </blockquote>
+          <p className="text-slate-500 text-sm">— Nutzer aus München</p>
+        </div>
+      </div>
 
-            {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
+      {/* Right form panel */}
+      <div className="flex-1 flex items-center justify-center bg-slate-50 p-6">
+        <div className="w-full max-w-sm">
+          {step === 'credentials' ? (
+            <div className="animate-fade-in">
+              <div className="lg:hidden mb-8">
+                <Logo markSize={26} textClass="text-[14px]" />
+              </div>
 
-            <form onSubmit={handleCredentials} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-1 tracking-tight">{t('auth.welcomeBack')}</h1>
+              <p className="text-slate-500 mb-8 text-sm">{t('auth.signInSubtitle')}</p>
+
+              {error && (
+                <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleCredentials} className="space-y-4">
+                <div>
+                  <label className="label">{t('auth.email')}</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="input"
+                    placeholder="max@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="label">{t('auth.password')}</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="input"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-1">
+                  {loading ? t('auth.signingIn') : t('auth.signIn')}
+                </button>
+              </form>
+
+              <p className="text-center text-sm text-slate-500 mt-6">
+                {t('auth.noAccount')}{' '}
+                <Link href="/register" className="text-brand-600 font-medium hover:text-brand-700">{t('auth.register')}</Link>
+              </p>
+            </div>
+          ) : (
+            <div className="animate-fade-in">
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
+                onClick={() => { setStep('credentials'); setError(''); setCode(''); }}
+                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors"
               >
-                {loading ? t('auth.signingIn') : t('auth.signIn')}
+                <ArrowLeft size={14} /> {t('auth.backToLogin')}
               </button>
-            </form>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
-              {t('auth.noAccount')}{' '}
-              <Link href="/register" className="text-brand-600 font-medium hover:underline">{t('auth.register')}</Link>
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.twoFactor')}</h1>
-            <p className="text-gray-500 mb-8">{t('auth.twoFactorSubtitle')}</p>
+              <h1 className="text-2xl font-bold text-slate-900 mb-1 tracking-tight">{t('auth.twoFactor')}</h1>
+              <p className="text-slate-500 mb-8 text-sm">{t('auth.twoFactorSubtitle')}</p>
 
-            {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
+              {error && (
+                <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">
+                  {error}
+                </div>
+              )}
 
-            <form onSubmit={handleMfa} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.authCode')}</label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\s/g, ''))}
-                  placeholder="000000"
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  maxLength={8}
-                  required
-                  autoFocus
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-xl tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading || code.length < 6}
-                className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
-              >
-                {loading ? t('auth.verifying') : t('auth.confirm')}
-              </button>
-            </form>
-
-            <button
-              onClick={() => { setStep('credentials'); setError(''); setCode(''); }}
-              className="w-full mt-3 text-sm text-gray-500 hover:text-gray-700 text-center"
-            >
-              {t('auth.backToLogin')}
-            </button>
-          </>
-        )}
+              <form onSubmit={handleMfa} className="space-y-4">
+                <div>
+                  <label className="label">{t('auth.authCode')}</label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\s/g, ''))}
+                    placeholder="000 000"
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    maxLength={8}
+                    required
+                    autoFocus
+                    className="input text-center text-2xl tracking-[0.4em] font-mono"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || code.length < 6}
+                  className="btn-primary w-full py-2.5"
+                >
+                  {loading ? t('auth.verifying') : t('auth.confirm')}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -47,63 +47,68 @@ function CategoryCard({ cat }: { cat: Category }) {
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center gap-3 p-4 hover:bg-slate-50/80 transition-colors text-left"
       >
         <span
-          className="w-9 h-9 rounded-full flex items-center justify-center text-lg shrink-0"
-          style={{ backgroundColor: cat.color ? `${cat.color}22` : '#f3f4f6' }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
+          style={{ backgroundColor: cat.color ? `${cat.color}18` : '#f1f5f9' }}
         >
           {cat.icon ?? '📁'}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900">{cat.name}</p>
-          <p className="text-xs text-gray-400">{cat.isSystem ? t('categories.system') : t('categories.custom')}</p>
+          <p className="text-sm font-medium text-slate-900 leading-tight">{cat.name}</p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {cat.isSystem ? t('categories.system') : t('categories.custom')}
+          </p>
         </div>
-        {open ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+        {open
+          ? <ChevronDown size={15} className="text-slate-400 shrink-0" />
+          : <ChevronRight size={15} className="text-slate-400 shrink-0" />
+        }
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 p-4 space-y-4">
+        <div className="border-t border-slate-100 p-4 bg-slate-50/40 space-y-4">
           {isLoading ? (
-            <p className="text-sm text-gray-400">{t('categories.loading')}</p>
+            <p className="text-xs text-slate-400">{t('categories.loading')}</p>
           ) : (
             <>
               {rules.length === 0 && (
-                <p className="text-sm text-gray-400">{t('categories.noRules')}</p>
+                <p className="text-xs text-slate-400">{t('categories.noRules')}</p>
               )}
               <div className="space-y-2">
                 {rules.map((rule) => (
-                  <div key={rule.id} className="flex items-center gap-2 text-sm">
-                    <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs">{FIELD_LABELS[rule.field] ?? rule.field}</span>
-                    <span className="font-mono text-gray-700 flex-1 truncate">"{rule.pattern}"</span>
-                    {rule.priority !== 0 && <span className="text-xs text-gray-400">P{rule.priority}</span>}
+                  <div key={rule.id} className="flex items-center gap-2 text-sm bg-white rounded-lg px-3 py-2 ring-1 ring-slate-100">
+                    <span className="badge-violet shrink-0">{FIELD_LABELS[rule.field] ?? rule.field}</span>
+                    <span className="font-mono text-slate-700 flex-1 truncate text-xs">"{rule.pattern}"</span>
+                    {rule.priority !== 0 && <span className="text-[11px] text-slate-400 shrink-0">P{rule.priority}</span>}
                     <button
                       onClick={() => deleteRule.mutate(rule.id)}
-                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      className="text-slate-300 hover:text-rose-500 transition-colors shrink-0 ml-1"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-2 border-t border-gray-100">
-                <p className="text-xs font-medium text-gray-500 mb-2">{t('categories.newRule')}</p>
+              <div className="pt-3 border-t border-slate-200/60">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5">{t('categories.newRule')}</p>
                 <div className="flex gap-2 flex-wrap">
                   <input
                     type="text"
                     placeholder={t('categories.patternPlaceholder')}
                     value={pattern}
                     onChange={(e) => setPattern(e.target.value)}
-                    className="flex-1 min-w-40 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="input flex-1 min-w-40 py-2 text-xs"
                   />
                   <select
                     value={field}
                     onChange={(e) => setField(e.target.value)}
-                    className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    className="input w-auto py-2 text-xs"
                   >
                     {Object.entries(FIELD_LABELS).map(([v, l]) => (
                       <option key={v} value={v}>{l}</option>
@@ -114,14 +119,14 @@ function CategoryCard({ cat }: { cat: Category }) {
                     placeholder={t('categories.priority')}
                     value={priority}
                     onChange={(e) => setPriority(Number(e.target.value))}
-                    className="w-24 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="input w-20 py-2 text-xs"
                   />
                   <button
                     onClick={() => pattern.trim() && addRule.mutate()}
                     disabled={!pattern.trim() || addRule.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                    className="btn-primary py-2 text-xs px-3"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus size={13} />
                     {t('categories.add')}
                   </button>
                 </div>
@@ -145,27 +150,30 @@ export default function KategorienPage() {
   const userCats = categories.filter((c) => !c.isSystem);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('categories.title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('categories.description')}</p>
+    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
+      <div className="mb-7">
+        <h1 className="page-title">{t('categories.title')}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t('categories.description')}</p>
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-gray-400">{t('categories.loading')}</p>
+        <p className="text-sm text-slate-400">{t('categories.loading')}</p>
       ) : (
         <>
           {userCats.length > 0 && (
             <section className="mb-8">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('categories.customCategories')}</h2>
+              <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                {t('categories.customCategories')}
+              </h2>
               <div className="space-y-2">
                 {userCats.map((cat) => <CategoryCard key={cat.id} cat={cat} />)}
               </div>
             </section>
           )}
-
           <section>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('categories.systemCategories')}</h2>
+            <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              {t('categories.systemCategories')}
+            </h2>
             <div className="space-y-2">
               {systemCats.map((cat) => <CategoryCard key={cat.id} cat={cat} />)}
             </div>

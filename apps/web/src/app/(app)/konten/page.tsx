@@ -5,6 +5,7 @@ import { api } from '../../../lib/api';
 import { formatEUR, formatDate } from '@finanzapp/utils';
 import type { BankAccount } from '@finanzapp/types';
 import Link from 'next/link';
+import { Building2 } from 'lucide-react';
 
 export default function KontenPage() {
   const { t } = useTranslation();
@@ -16,25 +17,34 @@ export default function KontenPage() {
   const total = accounts.reduce((s, a) => s + Number(a.balanceCents), 0);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('accounts.title')}</h1>
-      <p className="text-gray-500 mb-6">{t('accounts.totalBalance')} <span className="font-semibold text-gray-900">{formatEUR(total)}</span></p>
+    <div className="p-8 max-w-4xl mx-auto animate-fade-in">
+      <div className="mb-7">
+        <h1 className="page-title">{t('accounts.title')}</h1>
+        <p className="text-slate-500 text-sm mt-1">
+          {t('accounts.totalBalance')}{' '}
+          <span className="font-semibold text-slate-900 tabular-nums">{formatEUR(total)}</span>
+        </p>
+      </div>
 
-      {isLoading && <div className="text-center text-gray-400 py-12">{t('accounts.loading')}</div>}
+      {isLoading && (
+        <div className="flex justify-center items-center py-20 text-slate-400 text-sm">{t('accounts.loading')}</div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         {accounts.map((a) => (
-          <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-start justify-between mb-3">
+          <div key={a.id} className="card-hover p-6">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">{a.accountType}</p>
-                <h3 className="font-semibold text-gray-900">{a.accountName}</h3>
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{a.accountType}</p>
+                <h3 className="font-semibold text-slate-900 mt-0.5">{a.accountName}</h3>
               </div>
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">{t('accounts.active')}</span>
+              <span className="badge-green">{t('accounts.active')}</span>
             </div>
-            <p className="text-2xl font-bold mb-1">{formatEUR(Number(a.balanceCents))}</p>
-            <p className="text-xs text-gray-400 mb-4">{a.ibanMasked}</p>
-            <div className="flex justify-between text-xs text-gray-400">
+            <p className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mb-0.5">
+              {formatEUR(Number(a.balanceCents))}
+            </p>
+            <p className="text-xs text-slate-400 font-mono mb-4">{a.ibanMasked}</p>
+            <div className="flex justify-between items-center text-xs text-slate-400 pt-3 border-t border-slate-50">
               <span>{a.ownerName}</span>
               {a.balanceDate && <span>{t('accounts.asOf')} {formatDate(a.balanceDate)}</span>}
             </div>
@@ -43,10 +53,14 @@ export default function KontenPage() {
       </div>
 
       {!isLoading && accounts.length === 0 && (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-5xl mb-4">🏦</p>
-          <p>{t('accounts.noAccounts')}</p>
-          <Link href="/banken/verbinden" className="text-brand-600 hover:underline text-sm mt-2 block">{t('accounts.connectBank')}</Link>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-7 h-7 text-slate-400" />
+          </div>
+          <p className="text-slate-500 font-medium mb-1">{t('accounts.noAccounts')}</p>
+          <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
+            {t('accounts.connectBank')}
+          </Link>
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from 'recharts';
 import Link from 'next/link';
+import { Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
 
 type CashFlowEntry = { month: string; income: number; expenses: number; savings: number };
 type BreakdownEntry = { id: string; name: string; icon?: string | null; color?: string | null; total: number };
@@ -22,6 +23,14 @@ function rangeParams(months: number): string {
   from.setMonth(from.getMonth() - months);
   return `?from=${from.toISOString()}&to=${to.toISOString()}`;
 }
+
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: 'none',
+  boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)',
+  fontSize: '12px',
+  padding: '8px 12px',
+};
 
 export default function StatistikenPage() {
   const router = useRouter();
@@ -91,22 +100,28 @@ export default function StatistikenPage() {
   }));
 
   const uncategorized = breakdown.find((d) => d.id === 'other');
-
   const totalExpenses = breakdown.filter((d) => d.id !== 'other').reduce((s, d) => s + d.total, 0);
   const totalIncome = cashFlow.slice(-rangeMonths || -12).reduce((s, d) => s + d.income, 0);
   const totalSavings = totalIncome - totalExpenses;
 
+  const AXIS_TICK = { fontSize: 11, fill: '#94a3b8' };
+
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('statistics.title')}</h1>
+    <div className="p-8 max-w-6xl mx-auto animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-7">
+        <h1 className="page-title">{t('statistics.title')}</h1>
         <div className="flex items-center gap-3">
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+          <div className="flex rounded-xl ring-1 ring-slate-200 overflow-hidden text-sm bg-white">
             {RANGES.map((r) => (
               <button
                 key={r.months}
                 onClick={() => setRangeMonths(r.months)}
-                className={`px-3 py-1.5 transition-colors ${rangeMonths === r.months ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3.5 py-2 text-xs font-medium transition-colors ${
+                  rangeMonths === r.months
+                    ? 'bg-brand-600 text-white'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                }`}
               >
                 {r.label}
               </button>
@@ -115,59 +130,69 @@ export default function StatistikenPage() {
           <button
             onClick={() => autoCategorize.mutate()}
             disabled={autoCategorize.isPending}
-            className="px-4 py-1.5 rounded-lg bg-brand-600 text-white text-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            className="btn-primary"
           >
+            <Sparkles size={14} />
             {autoCategorize.isPending ? t('statistics.running') : t('statistics.autoCategorize')}
           </button>
         </div>
       </div>
 
+      {/* Toast */}
       {toast && (
-        <div className="mb-4 px-4 py-3 rounded-lg bg-green-50 text-green-800 text-sm border border-green-200">
+        <div className="mb-5 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 text-sm ring-1 ring-emerald-200/60 animate-slide-up">
           ✓ {toast}
         </div>
       )}
 
+      {/* Uncategorized banner */}
       {uncategorized && (
-        <div className="mb-6 flex items-center justify-between px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+        <div className="mb-6 flex items-center justify-between px-4 py-3 rounded-xl bg-amber-50 ring-1 ring-amber-200/60 text-sm text-amber-800">
           <span>{t('statistics.uncategorized_amount', { amount: formatEUR(uncategorized.total) })}</span>
-          <Link href="/kategorien" className="font-medium underline underline-offset-2">{t('statistics.createRules')}</Link>
+          <Link href="/kategorien" className="font-semibold hover:text-amber-900 transition-colors">
+            {t('statistics.createRules')} →
+          </Link>
         </div>
       )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: t('statistics.expenses'), value: totalExpenses, color: 'text-red-500' },
-          { label: t('statistics.income'), value: totalIncome, color: 'text-green-600' },
-          { label: t('statistics.savings'), value: totalSavings, color: totalSavings >= 0 ? 'text-brand-600' : 'text-red-500' },
-          { label: t('statistics.assets'), value: (netWorthData?.netWorth ?? 0) / 100, color: 'text-emerald-600' },
+          { label: t('statistics.expenses'), value: totalExpenses, color: 'text-rose-500', icon: TrendingDown, bg: 'bg-rose-50', iconColor: 'text-rose-500' },
+          { label: t('statistics.income'), value: totalIncome, color: 'text-emerald-600', icon: TrendingUp, bg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+          { label: t('statistics.savings'), value: totalSavings, color: totalSavings >= 0 ? 'text-brand-600' : 'text-rose-500', icon: TrendingUp, bg: 'bg-brand-50', iconColor: 'text-brand-600' },
+          { label: t('statistics.assets'), value: (netWorthData?.netWorth ?? 0) / 100, color: 'text-emerald-600', icon: TrendingUp, bg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
         ].map((c) => (
-          <div key={c.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm text-gray-500 mb-1">{c.label}</p>
-            <p className={`text-2xl font-bold ${c.color}`}>{formatEUR(c.value)}</p>
+          <div key={c.label} className="card p-5">
+            <div className="flex items-start justify-between mb-3">
+              <p className="text-xs text-slate-500">{c.label}</p>
+              <div className={`w-8 h-8 rounded-lg ${c.bg} flex items-center justify-center`}>
+                <c.icon size={15} className={c.iconColor} />
+              </div>
+            </div>
+            <p className={`text-xl font-bold tracking-tight tabular-nums ${c.color}`}>{formatEUR(c.value)}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-2 gap-5 mb-5">
         {/* Cash flow */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">{t('statistics.cashflow12m')}</h2>
+        <div className="card p-6">
+          <h2 className="section-title mb-5">{t('statistics.cashflow12m')}</h2>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={flowData}>
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
-              <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-              <Bar dataKey="income" fill="#22c55e" name={t('statistics.income')} radius={[3, 3, 0, 0]} />
-              <Bar dataKey="expenses" fill="#f87171" name={t('statistics.expenses')} radius={[3, 3, 0, 0]} />
+            <BarChart data={flowData} barGap={3}>
+              <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+              <YAxis tick={AXIS_TICK} tickFormatter={(v) => `${v}€`} axisLine={false} tickLine={false} width={48} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => formatEUR(v * 100)} />
+              <Bar dataKey="income" fill="#10b981" name={t('statistics.income')} radius={[3, 3, 0, 0]} />
+              <Bar dataKey="expenses" fill="#f43f5e" name={t('statistics.expenses')} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Spending pie */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">{t('statistics.expensesByCategory')}</h2>
+        {/* Pie chart */}
+        <div className="card p-6">
+          <h2 className="section-title mb-5">{t('statistics.expensesByCategory')}</h2>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -176,7 +201,8 @@ export default function StatistikenPage() {
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                outerRadius={90}
+                outerRadius={80}
+                innerRadius={40}
                 onClick={(_, i) => {
                   if (pieData[i]) router.push(`/transaktionen?categoryId=${pieData[i].id}`);
                 }}
@@ -186,65 +212,66 @@ export default function StatistikenPage() {
                   <Cell key={i} fill={entry.color ?? `hsl(${i * 45}, 65%, 55%)`} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
-              <Legend />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => formatEUR(v * 100)} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Savings trend */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <h2 className="text-base font-semibold mb-4">{t('statistics.savingsRate12m')}</h2>
+      <div className="card p-6 mb-5">
+        <h2 className="section-title mb-5">{t('statistics.savingsRate12m')}</h2>
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={flowData}>
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
-            <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
+            <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+            <YAxis tick={AXIS_TICK} tickFormatter={(v) => `${v}€`} axisLine={false} tickLine={false} width={48} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => formatEUR(v * 100)} />
             <Line type="monotone" dataKey="savings" stroke="#6366f1" strokeWidth={2} dot={false} name={t('statistics.savings')} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* Wealth trend */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+      <div className="card p-6 mb-5">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="text-base font-semibold">{t('statistics.wealthTrend12m')}</h2>
+          <h2 className="section-title">{t('statistics.wealthTrend12m')}</h2>
           {wealthDelta !== null && (
-            <span className={`text-sm font-medium ${wealthDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-              {wealthDelta >= 0 ? '▲' : '▼'} {formatEUR(Math.abs(wealthDelta) * 100)}
+            <span className={`text-sm font-semibold tabular-nums flex items-center gap-1 ${wealthDelta >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+              {wealthDelta >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              {formatEUR(Math.abs(wealthDelta) * 100)}
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-400 mb-4">{t('statistics.estimatedTrend')}</p>
+        <p className="text-xs text-slate-400 mb-5">{t('statistics.estimatedTrend')}</p>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={wealthTrend}>
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}€`} />
-            <Tooltip formatter={(v: number) => formatEUR(v * 100)} />
+            <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+            <YAxis tick={AXIS_TICK} tickFormatter={(v) => `${v}€`} axisLine={false} tickLine={false} width={48} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => formatEUR(v * 100)} />
             <Line type="monotone" dataKey="netWorth" stroke="#10b981" strokeWidth={2} dot={false} name={t('statistics.assets')} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Category bar breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-semibold mb-4">{t('statistics.allCategories')}</h2>
-        <div className="space-y-3">
+      {/* Category breakdown */}
+      <div className="card p-6">
+        <h2 className="section-title mb-5">{t('statistics.allCategories')}</h2>
+        <div className="space-y-3.5">
           {breakdown.filter((d) => d.id !== 'other').map((cat) => {
             const max = breakdown.filter((d) => d.id !== 'other')[0]?.total ?? 1;
             const pct = Math.round((cat.total / max) * 100);
             return (
               <Link key={cat.id} href={`/transaktionen?categoryId=${cat.id}`} className="flex items-center gap-3 group">
-                <span className="w-6 text-center">{cat.icon}</span>
+                <span className="w-6 text-center text-base shrink-0">{cat.icon}</span>
                 <div className="flex-1">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="group-hover:text-brand-600 transition-colors">{cat.name}</span>
-                    <span className="font-medium">{formatEUR(cat.total)}</span>
+                  <div className="flex justify-between text-sm mb-1.5">
+                    <span className="text-slate-700 group-hover:text-brand-600 transition-colors font-medium">{cat.name}</span>
+                    <span className="font-semibold text-slate-900 tabular-nums">{formatEUR(cat.total)}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full">
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all duration-300"
                       style={{ width: `${pct}%`, backgroundColor: cat.color ?? '#6366f1' }}
                     />
                   </div>
@@ -253,7 +280,7 @@ export default function StatistikenPage() {
             );
           })}
           {breakdown.filter((d) => d.id !== 'other').length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">{t('statistics.noExpenses')}</p>
+            <p className="text-sm text-slate-400 text-center py-6">{t('statistics.noExpenses')}</p>
           )}
         </div>
       </div>

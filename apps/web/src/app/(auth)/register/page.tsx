@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
 import type { LoginResponse } from '@finanzapp/types';
+import { Logo } from '../../../components/ui/Logo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -31,63 +32,91 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.createAccount')}</h1>
-        <p className="text-gray-500 mb-8">{t('auth.startForFree')}</p>
+    <div className="min-h-screen flex">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex w-[420px] bg-slate-950 flex-col p-10 shrink-0">
+        <Link href="/" className="mb-auto">
+          <Logo markSize={30} textClass="text-[15px] text-white" dark />
+        </Link>
+        <div className="mt-auto space-y-4">
+          {[
+            { emoji: '🏦', text: '15+ deutsche Banken verbinden' },
+            { emoji: '📊', text: 'Ausgaben automatisch kategorisieren' },
+            { emoji: '🎯', text: 'Budgets setzen und verfolgen' },
+          ].map((item) => (
+            <div key={item.text} className="flex items-center gap-3">
+              <span className="text-xl">{item.emoji}</span>
+              <span className="text-slate-300 text-sm">{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
+      {/* Right form panel */}
+      <div className="flex-1 flex items-center justify-center bg-slate-50 p-6">
+        <div className="w-full max-w-sm animate-fade-in">
+          <div className="lg:hidden mb-8">
+            <Logo markSize={26} textClass="text-[14px]" />
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            {(['firstName', 'lastName'] as const).map((f) => (
-              <div key={f}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {f === 'firstName' ? t('auth.firstName') : t('auth.lastName')}
-                </label>
-                <input
-                  value={form[f]}
-                  onChange={(e) => setForm({ ...form, [f]: e.target.value })}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-            ))}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.passwordMin8')}</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              minLength={8}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-60"
-          >
-            {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
-          </button>
-        </form>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1 tracking-tight">{t('auth.createAccount')}</h1>
+          <p className="text-slate-500 mb-8 text-sm">{t('auth.startForFree')}</p>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          {t('auth.alreadyRegistered')}{' '}
-          <Link href="/login" className="text-brand-600 font-medium hover:underline">{t('auth.signIn')}</Link>
-        </p>
+          {error && (
+            <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {(['firstName', 'lastName'] as const).map((f) => (
+                <div key={f}>
+                  <label className="label">
+                    {f === 'firstName' ? t('auth.firstName') : t('auth.lastName')}
+                  </label>
+                  <input
+                    value={form[f]}
+                    onChange={(e) => setForm({ ...form, [f]: e.target.value })}
+                    required
+                    className="input"
+                  />
+                </div>
+              ))}
+            </div>
+            <div>
+              <label className="label">{t('auth.email')}</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                className="input"
+                placeholder="max@example.com"
+              />
+            </div>
+            <div>
+              <label className="label">{t('auth.passwordMin8')}</label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                minLength={8}
+                required
+                className="input"
+                placeholder="Min. 8 Zeichen"
+              />
+            </div>
+            <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-1">
+              {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-slate-500 mt-6">
+            {t('auth.alreadyRegistered')}{' '}
+            <Link href="/login" className="text-brand-600 font-medium hover:text-brand-700">{t('auth.signIn')}</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
