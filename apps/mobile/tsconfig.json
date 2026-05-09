@@ -3,7 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@finanzapp/types": ["../../packages/types/src/index.ts"],
+      "@finanzapp/utils": ["../../packages/utils/src/index.ts"],
+      "@finanzapp/config": ["../../packages/config/src/index.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.d.ts", "expo-env.d.ts"]

@@ -6,5 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src/"
-  }
+  },
+  "react-native": "./src/index.ts",
+  "source": "./src/index.ts"
 }
