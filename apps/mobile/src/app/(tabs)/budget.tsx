@@ -1,7 +1,8 @@
-import { ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, RefreshControl, StatusBar } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { formatEUR } from '@finanzapp/utils';
+import { C, shadow } from '../../lib/theme';
 import type { Budget } from '@finanzapp/types';
 
 export default function BudgetScreen() {
@@ -12,51 +13,79 @@ export default function BudgetScreen() {
 
   const totalLimit = budgets.reduce((s, b) => s + b.limitCents, 0);
   const totalSpent = budgets.reduce((s, b) => s + (b.spentCents ?? 0), 0);
+  const totalPct = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0;
 
   return (
     <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} />}
+      style={s.container}
+      contentContainerStyle={s.content}
+      refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={C.brandMid} />}
     >
-      <View style={styles.summary}>
-        <Text style={styles.summaryLabel}>Gesamt diesen Monat</Text>
-        <Text style={styles.summaryValue}>{formatEUR(totalSpent)} / {formatEUR(totalLimit)}</Text>
+      <StatusBar barStyle="light-content" />
+
+      {/* Hero summary */}
+      <View style={s.hero}>
+        <Text style={s.heroLabel}>Gesamt diesen Monat</Text>
+        <Text style={s.heroValue}>{formatEUR(totalSpent)}</Text>
+        <Text style={s.heroSub}>von {formatEUR(totalLimit)}</Text>
+        <View style={s.heroTrack}>
+          <View
+            style={[s.heroFill, {
+              width: `${Math.min(totalPct, 100)}%` as `${number}%`,
+              backgroundColor: totalPct > 90 ? C.rose : totalPct > 70 ? C.amber : C.emerald,
+            }]}
+          />
+        </View>
+        <Text style={s.heroPct}>{totalPct}% des Budgets genutzt</Text>
       </View>
 
-      <View style={styles.list}>
+      {/* Budget cards */}
+      <View style={s.list}>
         {budgets.map((b) => {
           const pct = b.progressPercent ?? 0;
-          const color = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e';
+          const isOver = pct > 90;
+          const isWarn = pct > 70 && pct <= 90;
+          const barColor = isOver ? C.rose : isWarn ? C.amber : C.emerald;
+          const badgeBg = isOver ? C.roseBg : isWarn ? C.amberBg : C.emeraldBg;
+          const badgeColor = isOver ? C.rose : isWarn ? C.amber : C.emerald;
+
           return (
-            <View key={b.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
+            <View key={b.id} style={s.card}>
+              <View style={s.cardTop}>
+                <View style={s.iconWrap}>
                   <Text style={{ fontSize: 22 }}>{b.category?.icon ?? '💰'}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.cardName}>{b.name}</Text>
-                  <Text style={styles.cardCategory}>{b.category?.name}</Text>
+                  <Text style={s.cardName}>{b.name}</Text>
+                  <Text style={s.cardCat}>{b.category?.name}</Text>
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.cardSpent}>{formatEUR(b.spentCents ?? 0)}</Text>
-                  <Text style={styles.cardLimit}>von {formatEUR(b.limitCents)}</Text>
+                <View>
+                  <View style={[s.pctBadge, { backgroundColor: badgeBg }]}>
+                    <Text style={[s.pctBadgeText, { color: badgeColor }]}>{pct}%</Text>
+                  </View>
                 </View>
               </View>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${pct}%` as `${number}%`, backgroundColor: color }]} />
+
+              <View style={s.amtRow}>
+                <Text style={s.amtSpent}>{formatEUR(b.spentCents ?? 0)}</Text>
+                <Text style={s.amtOf}> von </Text>
+                <Text style={s.amtLimit}>{formatEUR(b.limitCents)}</Text>
               </View>
-              <View style={styles.cardFooter}>
-                <Text style={{ color, fontSize: 12, fontWeight: '600' }}>{pct}% genutzt</Text>
-                <Text style={styles.remaining}>{formatEUR(b.remainingCents ?? 0)} verbleibend</Text>
+
+              <View style={s.track}>
+                <View style={[s.fill, { width: `${Math.min(pct, 100)}%` as `${number}%`, backgroundColor: barColor }]} />
               </View>
+
+              <Text style={s.remaining}>{formatEUR(b.remainingCents ?? 0)} verbleibend</Text>
             </View>
           );
         })}
 
         {budgets.length === 0 && !isFetching && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🎯</Text>
-            <Text style={styles.emptyText}>Noch keine Budgets</Text>
+          <View style={s.empty}>
+            <Text style={s.emptyIcon}>🎯</Text>
+            <Text style={s.emptyTitle}>Noch keine Budgets</Text>
+            <Text style={s.emptyText}>Erstelle Budgets um deine Ausgaben im Blick zu behalten.</Text>
           </View>
         )}
       </View>
@@ -64,24 +93,38 @@ export default function BudgetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  summary: { backgroundColor: '#2563eb', padding: 24, paddingTop: 50 },
-  summaryLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 4 },
-  summaryValue: { color: '#fff', fontSize: 22, fontWeight: '800' },
-  list: { padding: 16, gap: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
-  cardIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
-  cardName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  cardCategory: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
-  cardSpent: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  cardLimit: { fontSize: 11, color: '#9ca3af' },
-  progressTrack: { height: 8, backgroundColor: '#f3f4f6', borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
-  progressFill: { height: '100%', borderRadius: 4 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between' },
-  remaining: { fontSize: 12, color: '#6b7280' },
-  empty: { alignItems: 'center', paddingTop: 60 },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  content: { paddingBottom: 32 },
+  hero: { backgroundColor: C.dark, paddingHorizontal: 20, paddingTop: 60, paddingBottom: 28 },
+  heroLabel: { fontSize: 12, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.5, marginBottom: 6 },
+  heroValue: { fontSize: 34, fontWeight: '800', color: '#fff', letterSpacing: -0.8 },
+  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 14 },
+  heroTrack: { height: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 3, overflow: 'hidden', marginBottom: 8 },
+  heroFill: { height: '100%', borderRadius: 3 },
+  heroPct: { fontSize: 12, color: 'rgba(255,255,255,0.4)' },
+  list: { padding: 16, gap: 10 },
+  card: {
+    backgroundColor: C.surface,
+    borderRadius: 18,
+    padding: 16,
+    ...shadow.sm,
+  },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  iconWrap: { width: 44, height: 44, borderRadius: 13, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
+  cardName: { fontSize: 15, fontWeight: '700', color: C.text, letterSpacing: -0.2 },
+  cardCat: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  pctBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  pctBadgeText: { fontSize: 11, fontWeight: '700' },
+  amtRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 },
+  amtSpent: { fontSize: 16, fontWeight: '700', color: C.text },
+  amtOf: { fontSize: 13, color: C.textMuted },
+  amtLimit: { fontSize: 14, fontWeight: '600', color: C.textSub },
+  track: { height: 7, backgroundColor: C.divider, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  fill: { height: '100%', borderRadius: 4 },
+  remaining: { fontSize: 12, color: C.textMuted },
+  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { color: '#9ca3af', fontSize: 15 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: C.text, marginBottom: 6 },
+  emptyText: { fontSize: 14, color: C.textSub, textAlign: 'center', lineHeight: 20 },
 });

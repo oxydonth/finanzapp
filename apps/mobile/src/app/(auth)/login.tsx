@@ -1,12 +1,23 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
+import { C, shadow } from '../../lib/theme';
 import type { LoginResponse } from '@finanzapp/types';
+
+function LogoMark() {
+  return (
+    <View style={s.logoMark}>
+      <View style={[s.bar, { height: 8, opacity: 0.7 }]} />
+      <View style={[s.bar, { height: 12 }]} />
+      <View style={[s.bar, { height: 16, opacity: 0.85 }]} />
+    </View>
+  );
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,6 +25,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
 
   async function handleLogin() {
     if (!email || !password) return;
@@ -30,57 +42,111 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.card}>
-        <Text style={styles.logo}>Finanzapp</Text>
-        <Text style={styles.title}>Willkommen zurück</Text>
-        <Text style={styles.subtitle}>Melde dich an um fortzufahren</Text>
+    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <StatusBar barStyle="light-content" />
 
-        <Text style={styles.label}>E-Mail</Text>
+      {/* Dark brand section */}
+      <View style={s.top}>
+        <View style={s.logoRow}>
+          <LogoMark />
+          <Text style={s.logoText}>Finanzapp</Text>
+        </View>
+        <Text style={s.tagline}>Deine Finanzen. Übersichtlich.</Text>
+      </View>
+
+      {/* Form card */}
+      <View style={s.card}>
+        <Text style={s.title}>Willkommen zurück</Text>
+        <Text style={s.subtitle}>Melde dich an um fortzufahren</Text>
+
+        <Text style={s.label}>E-Mail</Text>
         <TextInput
-          style={styles.input}
+          style={[s.input, focused === 'email' && s.inputFocused]}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
           placeholder="max@example.de"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={C.textMuted}
+          onFocus={() => setFocused('email')}
+          onBlur={() => setFocused(null)}
         />
 
-        <Text style={styles.label}>Passwort</Text>
+        <Text style={s.label}>Passwort</Text>
         <TextInput
-          style={styles.input}
+          style={[s.input, focused === 'pass' && s.inputFocused]}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           placeholder="••••••••"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={C.textMuted}
+          onFocus={() => setFocused('pass')}
+          onBlur={() => setFocused(null)}
         />
 
-        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Anmelden</Text>}
+        <TouchableOpacity
+          style={[s.btn, loading && s.btnDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={s.btnText}>Anmelden</Text>
+          }
         </TouchableOpacity>
 
-        <Link href="/(auth)/register" style={styles.link}>
-          Noch kein Konto? <Text style={styles.linkBold}>Registrieren</Text>
+        <Link href="/(auth)/register" style={s.linkRow}>
+          <Text style={s.linkText}>Noch kein Konto? </Text>
+          <Text style={s.linkBold}>Registrieren</Text>
         </Link>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb', justifyContent: 'center', padding: 20 },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 28, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  logo: { fontSize: 28, fontWeight: '800', color: '#2563eb', marginBottom: 20, textAlign: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#6b7280', marginBottom: 24 },
-  label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, fontSize: 15, color: '#111827', marginBottom: 16, backgroundColor: '#f9fafb' },
-  button: { backgroundColor: '#2563eb', borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 4 },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  link: { textAlign: 'center', marginTop: 20, color: '#6b7280', fontSize: 14 },
-  linkBold: { color: '#2563eb', fontWeight: '600' },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.dark },
+  top: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 28, paddingBottom: 36 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  logoMark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, width: 28, height: 20, backgroundColor: C.brand, borderRadius: 7, justifyContent: 'center', paddingBottom: 3 },
+  bar: { width: 4, backgroundColor: '#fff', borderRadius: 2 },
+  logoText: { fontSize: 18, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
+  tagline: { fontSize: 28, fontWeight: '800', color: '#fff', lineHeight: 34, letterSpacing: -0.5 },
+  card: {
+    backgroundColor: C.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 28,
+    paddingBottom: 40,
+    ...shadow.md,
+  },
+  title: { fontSize: 22, fontWeight: '800', color: C.text, marginBottom: 4, letterSpacing: -0.4 },
+  subtitle: { fontSize: 14, color: C.textSub, marginBottom: 24 },
+  label: { fontSize: 13, fontWeight: '600', color: C.text, marginBottom: 6 },
+  input: {
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: 12,
+    padding: 13,
+    fontSize: 15,
+    color: C.text,
+    marginBottom: 16,
+    backgroundColor: C.bg,
+  },
+  inputFocused: { borderColor: C.brand, backgroundColor: C.brandLight },
+  btn: {
+    backgroundColor: C.brand,
+    borderRadius: 14,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 4,
+    ...shadow.sm,
+  },
+  btnDisabled: { opacity: 0.55 },
+  btnText: { color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  linkRow: { textAlign: 'center', marginTop: 20 },
+  linkText: { color: C.textSub, fontSize: 14 },
+  linkBold: { color: C.brand, fontWeight: '700', fontSize: 14 },
 });
