@@ -78,9 +78,11 @@ router.post('/:id/rules', authenticate, async (req: AuthRequest, res, next) => {
   try {
     const cat = await prisma.category.findUnique({ where: { id: req.params.id } });
     if (!cat) throw new NotFoundError('Category');
-    if (cat.userId !== req.userId && !cat.isSystem) throw new ForbiddenError();
+    if (cat.userId !== req.userId) throw new ForbiddenError();
     const body = z.object({
-      pattern: z.string().min(1),
+      pattern: z.string().min(1).max(200).refine((p) => {
+        try { new RegExp(p); return true; } catch { return false; }
+      }, 'Invalid regex pattern'),
       field: z.enum(['purpose', 'creditorName', 'merchantName']).default('purpose'),
       priority: z.number().int().default(0),
     }).parse(req.body);
@@ -95,7 +97,7 @@ router.delete('/:id/rules/:ruleId', authenticate, async (req: AuthRequest, res, 
   try {
     const cat = await prisma.category.findUnique({ where: { id: req.params.id } });
     if (!cat) throw new NotFoundError('Category');
-    if (cat.userId !== req.userId && !cat.isSystem) throw new ForbiddenError();
+    if (cat.userId !== req.userId) throw new ForbiddenError();
     const rule = await prisma.categoryRule.findUnique({ where: { id: req.params.ruleId } });
     if (!rule || rule.categoryId !== req.params.id) throw new NotFoundError('CategoryRule');
     await prisma.categoryRule.delete({ where: { id: req.params.ruleId } });

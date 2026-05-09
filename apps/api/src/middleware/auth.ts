@@ -13,10 +13,12 @@ export function authenticate(req: AuthRequest, _res: Response, next: NextFunctio
 
   const token = header.slice(7);
   try {
-    const payload = jwt.verify(token, env.JWT_SECRET) as { sub: string };
+    const payload = jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] }) as { sub: string; purpose?: string };
+    if (payload.purpose) throw new UnauthorizedError('Invalid token type');
     req.userId = payload.sub;
     next();
-  } catch {
+  } catch (err) {
+    if (err instanceof UnauthorizedError) throw err;
     throw new UnauthorizedError('Invalid or expired token');
   }
 }

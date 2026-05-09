@@ -22,7 +22,7 @@ export async function register(
   const refreshToken = signRefreshToken(user.id);
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 8) },
+    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 12) },
   });
 
   return { user, accessToken, refreshToken };
@@ -43,7 +43,7 @@ export async function login(email: string, password: string) {
   const refreshToken = signRefreshToken(user.id);
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 8) },
+    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 12) },
   });
 
   const { passwordHash: _, refreshTokenHash: __, totpSecret: ___, mfaBackupCodes: ____, ...safeUser } = user;
@@ -58,7 +58,7 @@ export async function completeMfaLogin(userId: string) {
   const refreshToken = signRefreshToken(user.id);
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 8) },
+    data: { refreshTokenHash: await bcrypt.hash(refreshToken, 12) },
   });
 
   const { passwordHash: _, refreshTokenHash: __, totpSecret: ___, mfaBackupCodes: ____, ...safeUser } = user;

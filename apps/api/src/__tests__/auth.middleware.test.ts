@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
-import { signAccessToken, signRefreshToken } from '../utils/jwt';
+import { signAccessToken, signRefreshToken, signMfaToken } from '../utils/jwt';
 
 const USER_ID = 'auth-middleware-test-user';
 
@@ -50,6 +50,13 @@ describe('authenticate middleware', () => {
     const refreshToken = signRefreshToken(USER_ID);
     const { req, res, next } = makeMocks(`Bearer ${refreshToken}`);
     // refresh token signed with different secret — should throw
+    expect(() => authenticate(req, res, next)).toThrow();
+  });
+
+  it('throws on MFA token used as access token', () => {
+    const mfaToken = signMfaToken(USER_ID);
+    const { req, res, next } = makeMocks(`Bearer ${mfaToken}`);
+    // MFA token has purpose claim — must be rejected by authenticate
     expect(() => authenticate(req, res, next)).toThrow();
   });
 });

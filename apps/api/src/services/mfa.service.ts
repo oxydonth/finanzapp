@@ -101,7 +101,7 @@ export async function enableMfa(userId: string, code: string) {
   if (!totpVerify(user.totpSecret, code)) throw new UnauthorizedError('Invalid authenticator code');
 
   const plainCodes = generateBackupCodes();
-  const hashedCodes = await Promise.all(plainCodes.map((c) => bcrypt.hash(c, 8)));
+  const hashedCodes = await Promise.all(plainCodes.map((c) => bcrypt.hash(c, 12)));
 
   await prisma.user.update({ where: { id: userId }, data: { mfaEnabled: true, mfaBackupCodes: hashedCodes } });
 

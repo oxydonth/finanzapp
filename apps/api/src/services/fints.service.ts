@@ -13,6 +13,7 @@ interface PendingSession {
   blz: string;
   loginName: string;
   pin: string;
+  userId: string;
   bankConnectionId?: string;
 }
 
@@ -44,7 +45,7 @@ export async function initiateConnection(
     // Some banks require a TAN before returning accounts
     if (msg.toLowerCase().includes('tan') || msg.toLowerCase().includes('3920')) {
       const sessionId = uuidv4();
-      pendingSessions.set(sessionId, { client, blz, loginName, pin });
+      pendingSessions.set(sessionId, { client, blz, loginName, pin, userId });
       setTimeout(() => pendingSessions.delete(sessionId), 10 * 60 * 1000);
       return { sessionId, tanChallenge: msg };
     }
@@ -62,6 +63,7 @@ export async function submitTan(
 ): Promise<{ connectionId: string }> {
   const session = pendingSessions.get(sessionId);
   if (!session) throw new AppError('Session expired or not found', 404);
+  if (session.userId !== userId) throw new AppError('Session expired or not found', 404);
   pendingSessions.delete(sessionId);
 
   // Re-fetch accounts after TAN submission using the saved dialog
