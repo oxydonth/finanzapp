@@ -2,17 +2,12 @@ const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
 const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-
 const config = getDefaultConfig(projectRoot);
 
-// Watch the entire monorepo so Metro can resolve workspace packages
-config.watchFolders = [workspaceRoot];
-
-// Resolve modules from both app and workspace node_modules
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(workspaceRoot, 'node_modules'),
-];
+config.resolver.extraNodeModules = {
+  '@finanzapp/types': path.resolve(projectRoot, 'src/shared/types'),
+  '@finanzapp/utils': path.resolve(projectRoot, 'src/shared/utils'),
+  '@finanzapp/config': path.resolve(projectRoot, 'src/shared/config'),
+};
 
 module.exports = config;

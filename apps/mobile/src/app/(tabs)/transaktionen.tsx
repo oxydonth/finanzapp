@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import { formatEUR, formatDate } from '@finanzapp/utils';
-import { C, shadow } from '../../lib/theme';
+import { C } from '../../lib/theme';
 import type { Transaction } from '@finanzapp/types';
 
 interface TxPage { data: Transaction[]; total: number; totalPages: number; page: number }

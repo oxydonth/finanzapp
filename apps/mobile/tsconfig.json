@@ -4,9 +4,9 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@finanzapp/types": ["../../packages/types/src/index.ts"],
-      "@finanzapp/utils": ["../../packages/utils/src/index.ts"],
-      "@finanzapp/config": ["../../packages/config/src/index.ts"]
+      "@finanzapp/types": ["./src/shared/types/index.ts"],
+      "@finanzapp/utils": ["./src/shared/utils/index.ts"],
+      "@finanzapp/config": ["./src/shared/config/index.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.d.ts", "expo-env.d.ts"]
