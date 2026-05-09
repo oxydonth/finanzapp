@@ -305,9 +305,12 @@ export default function LandingPage() {
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
       <footer className="bg-slate-950 border-t border-white/5 py-10">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between flex-wrap gap-4">
           <Logo markSize={22} textClass="text-[13px] text-white" dark />
-          <p className="text-xs text-slate-600">© 2026 Finanzapp. DSGVO-konform · Made in Germany</p>
+          <div className="flex items-center gap-6">
+            <Link href="/datenschutz" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Datenschutz</Link>
+            <p className="text-xs text-slate-600">© 2026 Finanzapp · Made in Germany</p>
+          </div>
         </div>
       </footer>
     </div>

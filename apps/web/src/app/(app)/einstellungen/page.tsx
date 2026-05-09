@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { useAuthStore, getAccessToken, getRefreshToken } from '../../../store/authStore';
 import type { User, MfaSetupResponse, MfaEnableResponse } from '@finanzapp/types';
-import { Shield, ShieldCheck, ShieldOff, Copy, Check, Globe } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, Copy, Check, Globe, Download, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
 type MfaStep = 'idle' | 'setup' | 'backup-codes';
 
@@ -162,8 +164,66 @@ export default function EinstellungenPage() {
         </select>
       </section>
 
+      {/* DSGVO section */}
+      <section className="card p-6 mb-4">
+        <h2 className="section-title mb-1">Datenschutz & DSGVO</h2>
+        <p className="text-sm text-slate-500 mb-5">Deine Rechte gemäß Art. 15–17 DSGVO</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center gap-3">
+              <Download size={16} className="text-brand-600" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Datenexport (Art. 15 & 20)</p>
+                <p className="text-xs text-slate-500 mt-0.5">Alle deine Daten als JSON herunterladen</p>
+              </div>
+            </div>
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1/users/me/export`}
+              download
+              onClick={(e) => {
+                const token = typeof window !== 'undefined' ? localStorage.getItem('finanzapp_access_token') ?? '' : '';
+                if (!token) { e.preventDefault(); return; }
+                // Fetch with auth header, trigger download
+                e.preventDefault();
+                fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1/users/me/export`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                })
+                  .then((r) => r.blob())
+                  .then((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `finanzapp-daten-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  });
+              }}
+              className="btn-secondary text-sm py-1.5 px-3"
+            >
+              Exportieren
+            </a>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50/50 border border-rose-100">
+            <div className="flex items-center gap-3">
+              <Trash2 size={16} className="text-rose-500" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Konto löschen (Art. 17)</p>
+                <p className="text-xs text-slate-500 mt-0.5">Alle Daten unwiderruflich löschen</p>
+              </div>
+            </div>
+            <DeleteAccountButton />
+          </div>
+
+          <p className="text-xs text-slate-400 pt-1">
+            Weitere Informationen in unserer{' '}
+            <Link href="/datenschutz" target="_blank" className="text-brand-600 hover:underline">Datenschutzerklärung</Link>.
+          </p>
+        </div>
+      </section>
+
       {/* MFA section */}
-      <section className="card p-6">
+      <section className="card p-6 mb-4">
         <div className="flex items-center gap-3 mb-1">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${mfaEnabled ? 'bg-emerald-50' : 'bg-slate-100'}`}>
             {mfaEnabled
@@ -290,6 +350,66 @@ export default function EinstellungenPage() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function DeleteAccountButton() {
+  const { clearAuth } = useAuthStore();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleDelete() {
+    setError('');
+    setLoading(true);
+    try {
+      await api.delete('/users/me', { password });
+      await clearAuth();
+      router.push('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Löschen');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className="btn-danger text-sm py-1.5 px-3">
+        Löschen
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm animate-fade-in">
+        <h3 className="text-lg font-bold text-slate-900 mb-1">Konto unwiderruflich löschen</h3>
+        <p className="text-sm text-slate-500 mb-4">
+          Alle Daten, Konten und Transaktionen werden sofort gelöscht und können nicht wiederhergestellt werden.
+        </p>
+        {error && <div className="text-sm text-rose-600 bg-rose-50 rounded-lg px-3 py-2 mb-3">{error}</div>}
+        <label className="label">Passwort zur Bestätigung</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input mb-4"
+          placeholder="Dein Passwort"
+          autoFocus
+        />
+        <div className="flex gap-3">
+          <button onClick={handleDelete} disabled={!password || loading} className="btn-danger flex-1">
+            {loading ? 'Löschen…' : 'Konto endgültig löschen'}
+          </button>
+          <button onClick={() => { setOpen(false); setPassword(''); setError(''); }} className="btn-ghost">
+            Abbrechen
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

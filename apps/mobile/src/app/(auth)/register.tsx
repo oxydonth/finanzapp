@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
-  ScrollView, StatusBar,
+  ScrollView, StatusBar, Linking,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { api } from '../../lib/api';
@@ -14,10 +14,15 @@ export default function RegisterScreen() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '' });
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
 
   async function handleRegister() {
+    if (!consent) {
+      Alert.alert('Datenschutz', 'Bitte stimme der Datenschutzerklärung zu, um fortzufahren.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post<LoginResponse>('/auth/register', form);
@@ -80,10 +85,26 @@ export default function RegisterScreen() {
             </View>
           ))}
 
+          <TouchableOpacity style={s.consentRow} onPress={() => setConsent(!consent)} activeOpacity={0.7}>
+            <View style={[s.checkbox, consent && s.checkboxChecked]}>
+              {consent && <Text style={s.checkmark}>✓</Text>}
+            </View>
+            <Text style={s.consentText}>
+              Ich stimme der{' '}
+              <Text
+                style={s.consentLink}
+                onPress={() => Linking.openURL('https://finanzapp.de/datenschutz')}
+              >
+                Datenschutzerklärung
+              </Text>
+              {' '}zu (Art. 6 Abs. 1 lit. b DSGVO).
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
-            style={[s.btn, loading && s.btnDisabled]}
+            style={[s.btn, (loading || !consent) && s.btnDisabled]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={loading || !consent}
             activeOpacity={0.85}
           >
             {loading
@@ -142,6 +163,12 @@ const s = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.55 },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  consentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 6, marginBottom: 4 },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', marginTop: 1, flexShrink: 0 },
+  checkboxChecked: { backgroundColor: C.brand, borderColor: C.brand },
+  checkmark: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  consentText: { flex: 1, fontSize: 12, color: C.textSub, lineHeight: 18 },
+  consentLink: { color: C.brand, fontWeight: '600' },
   linkRow: { textAlign: 'center', marginTop: 20 },
   linkText: { color: C.textSub, fontSize: 14 },
   linkBold: { color: C.brand, fontWeight: '700', fontSize: 14 },

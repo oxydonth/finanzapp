@@ -13,11 +13,13 @@ export default function RegisterPage() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const { t } = useTranslation();
   const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '' });
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!consent) { setError('Bitte stimme der Datenschutzerklärung zu, um fortzufahren.'); return; }
     setError('');
     setLoading(true);
     try {
@@ -107,7 +109,22 @@ export default function RegisterPage() {
                 placeholder="Min. 8 Zeichen"
               />
             </div>
-            <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-1">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 shrink-0"
+              />
+              <span className="text-[13px] text-slate-500 leading-relaxed">
+                Ich habe die{' '}
+                <Link href="/datenschutz" target="_blank" className="text-brand-600 hover:underline font-medium">
+                  Datenschutzerklärung
+                </Link>{' '}
+                gelesen und stimme der Verarbeitung meiner Daten gemäß Art. 6 Abs. 1 lit. b DSGVO zu.
+              </span>
+            </label>
+            <button type="submit" disabled={loading || !consent} className="btn-primary w-full py-2.5 mt-1 disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
             </button>
           </form>
