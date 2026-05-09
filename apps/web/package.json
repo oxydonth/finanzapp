@@ -19,7 +19,7 @@
     "i18next": "^26.0.8",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^0.414.0",
-    "next": "^14.2.5",
+    "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^17.0.6",
@@ -40,5 +40,16 @@
     "tailwindcss": "^3.4.6",
     "typescript": "^5.5.4",
     "vitest": "^4.1.5"
+  },
+  "optionalDependencies": {
+    "@next/swc-darwin-arm64": "npm:null@*",
+    "@next/swc-darwin-x64": "npm:null@*",
+    "@next/swc-linux-arm64-gnu": "npm:null@*",
+    "@next/swc-linux-arm64-musl": "npm:null@*",
+    "@next/swc-linux-x64-gnu": "npm:null@*",
+    "@next/swc-linux-x64-musl": "npm:null@*",
+    "@next/swc-win32-arm64-msvc": "npm:null@*",
+    "@next/swc-win32-ia32-msvc": "npm:null@*",
+    "@next/swc-win32-x64-msvc": "npm:null@*"
   }
 }
