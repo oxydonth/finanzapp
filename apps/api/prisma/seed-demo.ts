@@ -142,7 +142,7 @@ async function main() {
     },
   });
 
-  const creditcard = await prisma.bankAccount.upsert({
+  await prisma.bankAccount.upsert({
     where: { id: 'demo-acc-cc' },
     update: { balanceCents: BigInt(-34218) },
     create: {
@@ -282,13 +282,20 @@ async function main() {
     tx(user.id, giro.id, 'income-salary', d(2026,5,2), 320000, 'CREDIT', { externalId: 'demo-may-salary', creditorName: 'ACME GmbH', purpose: 'Gehalt Mai 2026', isRecurring: true }),
     tx(user.id, giro.id, 'housing-rent', d(2026,5,2), 95000, 'DEBIT', { externalId: 'demo-may-rent', creditorName: 'Hausverwaltung Mitte GmbH', purpose: 'Miete Mai 2026 RE-2026-05', isRecurring: true }),
     tx(user.id, giro.id, 'transport-public', d(2026,5,2), 8600, 'DEBIT', { externalId: 'demo-may-bvg', creditorName: 'BVG Berlin', purpose: 'Monatskarte Mai', isRecurring: true }),
+    tx(user.id, giro.id, 'food-groceries', d(2026,5,3), 6720, 'DEBIT', { externalId: 'demo-may-rewe0', merchantName: 'REWE', purpose: 'REWE SAGT DANKE 5234' }),
+    tx(user.id, depot.id, 'savings-etf', d(2026,5,3), 50000, 'DEBIT', { externalId: 'demo-may-etf', creditorName: 'Deutsche Bank Securities', purpose: 'Sparplan iShares MSCI World ETF', isRecurring: true }),
+    tx(user.id, giro.id, 'transport-taxi', d(2026,5,4), 1240, 'DEBIT', { externalId: 'demo-may-uber1', merchantName: 'Uber', purpose: 'UBER TRIP 9C3D1E' }),
     tx(user.id, giro.id, 'health-insurance', d(2026,5,5), 18000, 'DEBIT', { externalId: 'demo-may-tk', creditorName: 'Techniker Krankenkasse', purpose: 'Krankenversicherung Mai 2026', isRecurring: true }),
     tx(user.id, giro.id, 'health-sports', d(2026,5,5), 2990, 'DEBIT', { externalId: 'demo-may-gym', creditorName: 'FitnesFirst Berlin', purpose: 'Monatsbeitrag Mai', isRecurring: true }),
+    tx(user.id, giro.id, 'food-delivery', d(2026,5,5), 2650, 'DEBIT', { externalId: 'demo-may-lieferando1', merchantName: 'Lieferando', purpose: 'LIEFERANDO.DE BESTELLUNG' }),
     tx(user.id, giro.id, 'food-groceries', d(2026,5,6), 5430, 'DEBIT', { externalId: 'demo-may-rewe1', merchantName: 'REWE', purpose: 'REWE SAGT DANKE 5234' }),
+    tx(user.id, giro.id, 'shopping-online', d(2026,5,6), 4990, 'DEBIT', { externalId: 'demo-may-amazon1', creditorName: 'Amazon EU S.a.r.l.', purpose: 'Amazon.de Bestellung 456-7890123' }),
     tx(user.id, giro.id, 'food-cafe', d(2026,5,7), 590, 'DEBIT', { externalId: 'demo-may-cafe1', merchantName: 'Starbucks', purpose: 'STARBUCKS COFFEE' }),
     tx(user.id, giro.id, 'food-groceries', d(2026,5,8), 3210, 'DEBIT', { externalId: 'demo-may-aldi1', merchantName: 'Aldi', purpose: 'ALDI SUED 1234' }),
     tx(user.id, giro.id, 'food-restaurant', d(2026,5,8), 4130, 'DEBIT', { externalId: 'demo-may-resto1', merchantName: 'Cantamundo', purpose: 'CANTAMUNDO BERLIN' }),
-    tx(user.id, depot.id, 'savings-etf', d(2026,5,3), 50000, 'DEBIT', { externalId: 'demo-may-etf', creditorName: 'Deutsche Bank Securities', purpose: 'Sparplan iShares MSCI World ETF', isRecurring: true }),
+    tx(user.id, giro.id, 'health-pharmacy', d(2026,5,8), 1890, 'DEBIT', { externalId: 'demo-may-apo1', merchantName: 'DM Drogerie', purpose: 'DM DROGERIE MARKT' }),
+    tx(user.id, giro.id, 'food-groceries', d(2026,5,9), 2870, 'DEBIT', { externalId: 'demo-may-lidl1', merchantName: 'Lidl', purpose: 'LIDL DIENSTLEISTUNG 9876' }),
+    tx(user.id, giro.id, 'transport-car', d(2026,5,9), 6500, 'DEBIT', { externalId: 'demo-may-aral1', merchantName: 'Aral Tankstelle', purpose: 'ARAL BERLIN MITTE' }),
   ];
 
   await prisma.transaction.createMany({ data: txData });
@@ -301,8 +308,8 @@ async function main() {
     { name: 'Lebensmittel & Essen', categoryId: 'food', limitCents: BigInt(50000), startDate: d(2026, 5, 1) },
     { name: 'Freizeit & Unterhaltung', categoryId: 'entertainment', limitCents: BigInt(15000), startDate: d(2026, 5, 1) },
     { name: 'Shopping', categoryId: 'shopping', limitCents: BigInt(20000), startDate: d(2026, 5, 1) },
-    { name: 'Mobilität', categoryId: 'transport', limitCents: BigInt(12000), startDate: d(2026, 5, 1) },
-    { name: 'Gesundheit & Sport', categoryId: 'health', limitCents: BigInt(10000), startDate: d(2026, 5, 1) },
+    { name: 'Mobilität', categoryId: 'transport', limitCents: BigInt(17000), startDate: d(2026, 5, 1) },
+    { name: 'Gesundheit & Sport', categoryId: 'health', limitCents: BigInt(25000), startDate: d(2026, 5, 1) },
     { name: 'Wohnen & Nebenkosten', categoryId: 'housing', limitCents: BigInt(105000), startDate: d(2026, 5, 1) },
   ];
 

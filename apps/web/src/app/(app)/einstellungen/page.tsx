@@ -154,8 +154,12 @@ export default function EinstellungenPage() {
           <h2 className="section-title">{t('settings.language')}</h2>
         </div>
         <select
-          value={i18n.language}
-          onChange={(e) => i18n.changeLanguage(e.target.value)}
+          value={i18n.language.split('-')[0]}
+          onChange={(e) => {
+            const code = e.target.value;
+            i18n.changeLanguage(code);
+            api.patch('/users/me', { locale: code }).catch(() => {});
+          }}
           className="input"
         >
           {LANGUAGES.map((lang) => (
@@ -166,24 +170,23 @@ export default function EinstellungenPage() {
 
       {/* DSGVO section */}
       <section className="card p-6 mb-4">
-        <h2 className="section-title mb-1">Datenschutz & DSGVO</h2>
-        <p className="text-sm text-slate-500 mb-5">Deine Rechte gemäß Art. 15–17 DSGVO</p>
+        <h2 className="section-title mb-1">{t('settings.privacyTitle')}</h2>
+        <p className="text-sm text-slate-500 mb-5">{t('settings.privacyDesc')}</p>
         <div className="space-y-3">
           <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
             <div className="flex items-center gap-3">
               <Download size={16} className="text-brand-600" />
               <div>
-                <p className="text-sm font-semibold text-slate-900">Datenexport (Art. 15 & 20)</p>
-                <p className="text-xs text-slate-500 mt-0.5">Alle deine Daten als JSON herunterladen</p>
+                <p className="text-sm font-semibold text-slate-900">{t('settings.exportData')}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{t('settings.exportDataDesc')}</p>
               </div>
             </div>
             <a
               href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1/users/me/export`}
               download
               onClick={(e) => {
-                const token = typeof window !== 'undefined' ? localStorage.getItem('finanzapp_access_token') ?? '' : '';
+                const token = typeof window !== 'undefined' ? sessionStorage.getItem('fa-at') ?? '' : '';
                 if (!token) { e.preventDefault(); return; }
-                // Fetch with auth header, trigger download
                 e.preventDefault();
                 fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1/users/me/export`, {
                   headers: { Authorization: `Bearer ${token}` },
@@ -193,14 +196,14 @@ export default function EinstellungenPage() {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `finanzapp-daten-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.download = `finanzapp-export-${new Date().toISOString().slice(0, 10)}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
                   });
               }}
               className="btn-secondary text-sm py-1.5 px-3"
             >
-              Exportieren
+              {t('settings.exportBtn')}
             </a>
           </div>
 
@@ -208,16 +211,16 @@ export default function EinstellungenPage() {
             <div className="flex items-center gap-3">
               <Trash2 size={16} className="text-rose-500" />
               <div>
-                <p className="text-sm font-semibold text-slate-900">Konto löschen (Art. 17)</p>
-                <p className="text-xs text-slate-500 mt-0.5">Alle Daten unwiderruflich löschen</p>
+                <p className="text-sm font-semibold text-slate-900">{t('settings.deleteAccount')}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{t('settings.deleteAccountDesc')}</p>
               </div>
             </div>
             <DeleteAccountButton />
           </div>
 
           <p className="text-xs text-slate-400 pt-1">
-            Weitere Informationen in unserer{' '}
-            <Link href="/datenschutz" target="_blank" className="text-brand-600 hover:underline">Datenschutzerklärung</Link>.
+            {t('settings.privacyNote')}{' '}
+            <Link href="/datenschutz" target="_blank" className="text-brand-600 hover:underline">{t('settings.privacyPolicy')}</Link>.
           </p>
         </div>
       </section>
@@ -357,6 +360,7 @@ export default function EinstellungenPage() {
 function DeleteAccountButton() {
   const { clearAuth } = useAuthStore();
   const router = useRouter();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -370,7 +374,7 @@ function DeleteAccountButton() {
       await clearAuth();
       router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen');
+      setError(err instanceof Error ? err.message : t('settings.deleteError'));
     } finally {
       setLoading(false);
     }
@@ -379,7 +383,7 @@ function DeleteAccountButton() {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="btn-danger text-sm py-1.5 px-3">
-        Löschen
+        {t('settings.deleteBtn')}
       </button>
     );
   }
@@ -387,26 +391,24 @@ function DeleteAccountButton() {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm animate-fade-in">
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Konto unwiderruflich löschen</h3>
-        <p className="text-sm text-slate-500 mb-4">
-          Alle Daten, Konten und Transaktionen werden sofort gelöscht und können nicht wiederhergestellt werden.
-        </p>
+        <h3 className="text-lg font-bold text-slate-900 mb-1">{t('settings.deleteConfirmTitle')}</h3>
+        <p className="text-sm text-slate-500 mb-4">{t('settings.deleteConfirmDesc')}</p>
         {error && <div className="text-sm text-rose-600 bg-rose-50 rounded-lg px-3 py-2 mb-3">{error}</div>}
-        <label className="label">Passwort zur Bestätigung</label>
+        <label className="label">{t('settings.passwordConfirm')}</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="input mb-4"
-          placeholder="Dein Passwort"
+          placeholder={t('settings.passwordPlaceholder')}
           autoFocus
         />
         <div className="flex gap-3">
           <button onClick={handleDelete} disabled={!password || loading} className="btn-danger flex-1">
-            {loading ? 'Löschen…' : 'Konto endgültig löschen'}
+            {loading ? t('settings.deleteConfirmBtnLoading') : t('settings.deleteConfirmBtn')}
           </button>
           <button onClick={() => { setOpen(false); setPassword(''); setError(''); }} className="btn-ghost">
-            Abbrechen
+            {t('settings.cancel')}
           </button>
         </div>
       </div>

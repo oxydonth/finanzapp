@@ -17,12 +17,24 @@ router.get('/', authenticate, async (req: AuthRequest, res, next) => {
     const from = startOfCurrentMonth();
     const to = endOfCurrentMonth();
 
+    // Resolve each budget's effective category IDs (parent + all children)
+    const categoryIds = [...new Set(budgets.map((b: typeof budgets[number]) => b.categoryId))];
+    const children = await prisma.category.findMany({
+      where: { parentId: { in: categoryIds } },
+      select: { id: true, parentId: true },
+    });
+    const childMap: Record<string, string[]> = {};
+    for (const c of children) {
+      if (c.parentId) (childMap[c.parentId] ??= []).push(c.id);
+    }
+
     const withSpend = await Promise.all(
       budgets.map(async (b: typeof budgets[number]) => {
+        const effectiveCategoryIds = [b.categoryId, ...(childMap[b.categoryId] ?? [])];
         const agg = await prisma.transaction.aggregate({
           where: {
             userId: req.userId!,
-            categoryId: b.categoryId,
+            categoryId: { in: effectiveCategoryIds },
             type: 'DEBIT',
             bookingDate: { gte: from, lte: to },
             ...(b.bankAccountId ? { bankAccountId: b.bankAccountId } : {}),

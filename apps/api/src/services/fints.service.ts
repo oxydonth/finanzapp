@@ -138,7 +138,7 @@ async function finaliseConnection(
         id: accountId,
         userId,
         bankConnectionId: connection.id,
-        iban: encrypt(iban).ciphertext,
+        iban: (() => { const e = encrypt(iban); return `${e.ciphertext}:${e.iv}:${e.tag}`; })(),
         ibanMasked: maskIBAN(iban),
         bic: acc.bic ?? '',
         accountType: AccountType.CHECKING,
@@ -192,8 +192,9 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
     const newTxIds: string[] = [];
 
     for (const account of connection.accounts) {
+      const [ibanCipher, ibanIv, ibanTag] = account.iban.split(':');
       const sepaAccount: SEPAAccount = {
-        iban: decrypt(account.iban, '', ''),
+        iban: ibanCipher && ibanIv && ibanTag ? decrypt(ibanCipher, ibanIv, ibanTag) : account.iban,
         bic: account.bic,
         accountNumber: account.id,
         blz: connection.bankCode,

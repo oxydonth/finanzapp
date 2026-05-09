@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const localeSynced = useRef(false);
+
+  // Apply user's saved locale on first load, unless user has manually chosen a language
+  useEffect(() => {
+    if (!user?.locale || localeSynced.current) return;
+    const manualChoice = typeof window !== 'undefined' && localStorage.getItem('i18nextLng');
+    if (!manualChoice) {
+      const code = user.locale.split('-')[0];
+      i18n.changeLanguage(code);
+    }
+    localeSynced.current = true;
+  }, [user, i18n]);
 
   const NAV = [
     { href: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },

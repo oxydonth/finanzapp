@@ -59,11 +59,13 @@ router.get('/', authenticate, async (req: AuthRequest, res, next) => {
     ]);
 
     res.json({
-      data: transactions,
-      total,
-      page: query.page,
-      limit: query.limit,
-      totalPages: Math.ceil(total / query.limit),
+      data: {
+        data: transactions,
+        total,
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
+      },
     });
   } catch (e) { next(e); }
 });
