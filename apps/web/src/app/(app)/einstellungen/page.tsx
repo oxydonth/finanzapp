@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
-import { useAuthStore } from '../../../store/authStore';
+import { useAuthStore, getAccessToken, getRefreshToken } from '../../../store/authStore';
 import type { User, MfaSetupResponse, MfaEnableResponse } from '@finanzapp/types';
 import { Shield, ShieldCheck, ShieldOff, Copy, Check, Globe } from 'lucide-react';
 
@@ -89,7 +89,7 @@ export default function EinstellungenPage() {
       setCode('');
       setError('');
       qc.invalidateQueries({ queryKey: ['me'] });
-      if (user) setAuth({ ...user, mfaEnabled: true }, useAuthStore.getState().accessToken!);
+      if (user) setAuth({ ...user, mfaEnabled: true }, getAccessToken()!, getRefreshToken()!);
     },
     onError: (err) => setError(err instanceof Error ? err.message : t('settings.invalidCode')),
   });
@@ -101,7 +101,7 @@ export default function EinstellungenPage() {
       setDisableCode('');
       setError('');
       qc.invalidateQueries({ queryKey: ['me'] });
-      if (user) setAuth({ ...user, mfaEnabled: false }, useAuthStore.getState().accessToken!);
+      if (user) setAuth({ ...user, mfaEnabled: false }, getAccessToken()!, getRefreshToken()!);
     },
     onError: (err) => setError(err instanceof Error ? err.message : t('settings.invalidCode')),
   });

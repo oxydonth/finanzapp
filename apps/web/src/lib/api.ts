@@ -1,7 +1,27 @@
+import { useAuthStore, getAccessToken, getRefreshToken, storeTokens } from '../store/authStore';
+
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+async function tryRefresh(): Promise<boolean> {
+  const rt = getRefreshToken();
+  if (!rt) return false;
+  try {
+    const res = await fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: rt }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    storeTokens(json.data.accessToken, json.data.refreshToken);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function request<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
+  const token = getAccessToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
@@ -12,9 +32,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (res.status === 401) {
-    localStorage.removeItem('accessToken');
+    if (retry && await tryRefresh()) {
+      return request<T>(path, options, false);
+    }
+    useAuthStore.getState().clearAuth();
     window.location.href = '/login';
-    throw new Error('Unauthorized');
+    throw new Error('Session expired');
   }
 
   const json = await res.json();

@@ -18,7 +18,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const res = await api.post<LoginResponse>('/auth/register', form);
-      await setAuth(res.user, res.accessToken);
+      await setAuth(res.user, res.accessToken, res.refreshToken);
       router.replace('/(tabs)');
     } catch (err) {
       Alert.alert('Fehler', err instanceof Error ? err.message : 'Registrierung fehlgeschlagen');

@@ -5,7 +5,7 @@ import type { User } from '@finanzapp/types';
 interface AuthState {
   user: User | null;
   isLoading: boolean;
-  setAuth: (user: User, token: string) => Promise<void>;
+  setAuth: (user: User, accessToken: string, refreshToken: string) => Promise<void>;
   clearAuth: () => Promise<void>;
   loadAuth: () => Promise<void>;
 }
@@ -14,14 +14,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
 
-  setAuth: async (user, token) => {
-    await SecureStore.setItemAsync('accessToken', token);
+  setAuth: async (user, accessToken, refreshToken) => {
+    await SecureStore.setItemAsync('accessToken', accessToken);
+    await SecureStore.setItemAsync('refreshToken', refreshToken);
     await SecureStore.setItemAsync('user', JSON.stringify(user));
     set({ user });
   },
 
   clearAuth: async () => {
     await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
     await SecureStore.deleteItemAsync('user');
     set({ user: null });
   },

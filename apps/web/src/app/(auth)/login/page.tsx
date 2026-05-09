@@ -30,7 +30,7 @@ export default function LoginPage() {
         setStep('mfa');
       } else {
         const r = res as LoginResponse;
-        setAuth(r.user, r.accessToken);
+        setAuth(r.user, r.accessToken, r.refreshToken);
         router.push('/dashboard');
       }
     } catch (err) {
@@ -46,7 +46,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await api.post<LoginResponse>('/auth/mfa/complete', { mfaToken, code });
-      setAuth(res.user, res.accessToken);
+      setAuth(res.user, res.accessToken, res.refreshToken);
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.invalidCode'));
