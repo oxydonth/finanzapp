@@ -1,10 +1,35 @@
+'use client';
+import { useThemeStore } from '../../store/themeStore';
+
 interface LogoMarkProps {
   size?: number;
   className?: string;
 }
 
 export function LogoMark({ size = 32, className = '' }: LogoMarkProps) {
+  const theme = useThemeStore((s) => s.theme);
   const inner = Math.round(size * 0.52);
+
+  if (theme === 'girly') {
+    return (
+      <div
+        className={`rounded-full bg-gradient-to-br from-pink-300 via-pink-400 to-rose-400 flex items-center justify-center shrink-0 shadow-lg shadow-pink-400/40 ${className}`}
+        style={{ width: size, height: size }}
+      >
+        {/* Sakura blossom */}
+        <svg width={inner} height={inner} viewBox="0 0 18 18" fill="none">
+          <ellipse cx="9" cy="4.5" rx="2.2" ry="3.2" fill="white" fillOpacity="0.9" />
+          <ellipse cx="9" cy="4.5" rx="2.2" ry="3.2" fill="white" fillOpacity="0.9" transform="rotate(72 9 9)" />
+          <ellipse cx="9" cy="4.5" rx="2.2" ry="3.2" fill="white" fillOpacity="0.9" transform="rotate(144 9 9)" />
+          <ellipse cx="9" cy="4.5" rx="2.2" ry="3.2" fill="white" fillOpacity="0.9" transform="rotate(216 9 9)" />
+          <ellipse cx="9" cy="4.5" rx="2.2" ry="3.2" fill="white" fillOpacity="0.9" transform="rotate(288 9 9)" />
+          <circle cx="9" cy="9" r="2.8" fill="white" />
+          <circle cx="9" cy="9" r="1.4" fill="#f9a8d4" />
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`rounded-xl bg-gradient-to-br from-brand-400 via-brand-500 to-violet-600 flex items-center justify-center shrink-0 shadow-lg shadow-brand-900/30 ${className}`}
@@ -27,12 +52,17 @@ interface LogoProps {
 }
 
 export function Logo({ markSize = 32, textClass = '', showText = true, dark = false }: LogoProps) {
+  const theme = useThemeStore((s) => s.theme);
+  const isGirly = theme === 'girly';
+
+  const textColor = isGirly && !dark ? 'text-pink-500' : dark ? 'text-white' : 'text-slate-900';
+
   return (
     <div className="flex items-center gap-2.5">
       <LogoMark size={markSize} />
       {showText && (
-        <span className={`font-semibold tracking-tight leading-none ${dark ? 'text-white' : 'text-slate-900'} ${textClass}`}>
-          Finanzapp
+        <span className={`font-semibold tracking-tight leading-none ${textColor} ${textClass}`}>
+          {isGirly ? '✿ Finanzapp' : 'Finanzapp'}
         </span>
       )}
     </div>

@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import { formatEUR, formatDate } from '@finanzapp/utils';
-import { C } from '../../lib/theme';
+import { useTheme } from '../../lib/theme';
 import type { Transaction } from '@finanzapp/types';
 
 interface TxPage { data: Transaction[]; total: number; totalPages: number; page: number }
@@ -16,9 +16,47 @@ const FILTERS = [
 ] as const;
 
 export default function TransaktionenScreen() {
+  const C = useTheme();
   const [search, setSearch] = useState('');
   const [type, setType] = useState<'' | 'CREDIT' | 'DEBIT'>('');
   const [focused, setFocused] = useState(false);
+
+  const s = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    header: { backgroundColor: C.dark, paddingHorizontal: 16, paddingTop: 56, paddingBottom: 14 },
+    headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5, marginBottom: 12 },
+    searchBox: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: 'rgba(255,255,255,0.08)',
+      borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+      marginBottom: 10,
+    },
+    searchBoxFocused: { borderColor: C.brand, backgroundColor: `${C.brand}20` },
+    searchInput: { flex: 1, fontSize: 14, color: '#fff' },
+    filterRow: { flexDirection: 'row', gap: 6 },
+    pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)' },
+    pillActive: { backgroundColor: C.brand },
+    pillText: { fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: '600' },
+    pillTextActive: { color: '#fff' },
+    listContent: { paddingBottom: 24 },
+    emptyContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
+    txRow: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: 16, paddingVertical: 12,
+      backgroundColor: C.surface,
+    },
+    txIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    txName: { fontSize: 14, fontWeight: '600', color: C.text },
+    txPurpose: { fontSize: 11, color: C.textMuted, marginTop: 1 },
+    txDate: { fontSize: 11, color: C.textMuted, marginTop: 2 },
+    txAmt: { fontSize: 14, fontWeight: '700', color: C.text },
+    catBadge: { marginTop: 3, backgroundColor: C.brandLight, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
+    catBadgeText: { fontSize: 9, color: C.brand, fontWeight: '700' },
+    sep: { height: 1, backgroundColor: C.divider, marginLeft: 68 },
+    empty: { alignItems: 'center', gap: 10 },
+    emptyText: { fontSize: 14, color: C.textMuted },
+  }), [C]);
 
   const params = new URLSearchParams({ limit: '50', ...(search && { search }), ...(type && { type }) });
   const { data, isFetching, refetch } = useQuery<TxPage>({
@@ -32,11 +70,9 @@ export default function TransaktionenScreen() {
     <View style={s.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
       <View style={s.header}>
         <Text style={s.headerTitle}>Ausgaben</Text>
 
-        {/* Search */}
         <View style={[s.searchBox, focused && s.searchBoxFocused]}>
           <Ionicons name="search" size={15} color={focused ? C.brand : C.textMuted} style={{ marginRight: 8 }} />
           <TextInput
@@ -55,7 +91,6 @@ export default function TransaktionenScreen() {
           )}
         </View>
 
-        {/* Filter pills */}
         <View style={s.filterRow}>
           {FILTERS.map((f) => (
             <TouchableOpacity
@@ -111,40 +146,3 @@ export default function TransaktionenScreen() {
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: { backgroundColor: C.dark, paddingHorizontal: 16, paddingTop: 56, paddingBottom: 14 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5, marginBottom: 12 },
-  searchBox: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    marginBottom: 10,
-  },
-  searchBoxFocused: { borderColor: C.brand, backgroundColor: 'rgba(79,70,229,0.12)' },
-  searchInput: { flex: 1, fontSize: 14, color: '#fff' },
-  filterRow: { flexDirection: 'row', gap: 6 },
-  pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)' },
-  pillActive: { backgroundColor: C.brand },
-  pillText: { fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: '600' },
-  pillTextActive: { color: '#fff' },
-  listContent: { paddingBottom: 24 },
-  emptyContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
-  txRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: C.surface,
-  },
-  txIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  txName: { fontSize: 14, fontWeight: '600', color: C.text },
-  txPurpose: { fontSize: 11, color: C.textMuted, marginTop: 1 },
-  txDate: { fontSize: 11, color: C.textMuted, marginTop: 2 },
-  txAmt: { fontSize: 14, fontWeight: '700', color: C.text },
-  catBadge: { marginTop: 3, backgroundColor: C.brandLight, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
-  catBadgeText: { fontSize: 9, color: C.brand, fontWeight: '700' },
-  sep: { height: 1, backgroundColor: C.divider, marginLeft: 68 },
-  empty: { alignItems: 'center', gap: 10 },
-  emptyText: { fontSize: 14, color: C.textMuted },
-});

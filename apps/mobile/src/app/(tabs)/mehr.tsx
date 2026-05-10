@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Alert, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
-import { C, shadow } from '../../lib/theme';
+import { useThemeStore, type Theme } from '../../store/themeStore';
+import { useTheme, shadow } from '../../lib/theme';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -17,6 +19,52 @@ interface MenuItem {
 export default function MehrScreen() {
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
+  const C = useTheme();
+
+  const s = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    content: { paddingBottom: 40 },
+    hero: {
+      backgroundColor: C.dark,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingHorizontal: 20,
+      paddingTop: 60,
+      paddingBottom: 24,
+    },
+    avatar: {
+      width: 52, height: 52, borderRadius: 26,
+      backgroundColor: C.brand,
+      justifyContent: 'center', alignItems: 'center',
+    },
+    avatarText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+    profileName: { fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
+    profileEmail: { fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
+    section: { paddingHorizontal: 16, marginTop: 20 },
+    sectionTitle: { fontSize: 11, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 },
+    sectionCard: { backgroundColor: C.surface, borderRadius: 18, overflow: 'hidden', ...shadow.sm },
+    menuItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 },
+    menuItemBorder: { borderBottomWidth: 1, borderBottomColor: C.divider },
+    menuIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    menuLabel: { fontSize: 14, fontWeight: '600', color: C.text },
+    menuSub: { fontSize: 11, color: C.textMuted, marginTop: 1 },
+    themeRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
+    themeBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: C.border, backgroundColor: C.surface },
+    themeBtnActive: { borderColor: C.brand, backgroundColor: C.brandLight },
+    themeBtnLabel: { fontSize: 12, fontWeight: '700', color: C.textSub },
+    themeBtnLabelActive: { color: C.brand },
+    logoutBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, marginHorizontal: 16, marginTop: 20,
+      backgroundColor: C.roseBg, borderRadius: 16,
+      paddingVertical: 14,
+      borderWidth: 1, borderColor: `${C.rose}22`,
+    },
+    logoutText: { color: C.rose, fontWeight: '700', fontSize: 14 },
+    version: { textAlign: 'center', fontSize: 11, color: C.textMuted, marginTop: 20 },
+  }), [C]);
 
   const initials = `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`.toUpperCase();
 
@@ -60,22 +108,46 @@ export default function MehrScreen() {
     },
   ];
 
+  const THEMES: { value: Theme; label: string; emoji: string }[] = [
+    { value: 'light', label: 'Hell', emoji: '☀️' },
+    { value: 'dark', label: 'Dunkel', emoji: '🌙' },
+    { value: 'girly', label: 'Girly', emoji: '🌸' },
+  ];
+
   return (
     <ScrollView style={s.container} contentContainerStyle={s.content}>
       <StatusBar barStyle="light-content" />
 
-      {/* Profile hero */}
       <View style={s.hero}>
         <View style={s.avatar}>
           <Text style={s.avatarText}>{initials}</Text>
         </View>
-        <View style={s.profileInfo}>
+        <View>
           <Text style={s.profileName}>{user?.firstName} {user?.lastName}</Text>
           <Text style={s.profileEmail}>{user?.email}</Text>
         </View>
       </View>
 
-      {/* Menu sections */}
+      {/* Theme switcher */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Erscheinungsbild</Text>
+        <View style={[s.sectionCard, { overflow: 'visible' }]}>
+          <View style={s.themeRow}>
+            {THEMES.map((t) => (
+              <TouchableOpacity
+                key={t.value}
+                style={[s.themeBtn, theme === t.value && s.themeBtnActive]}
+                onPress={() => setTheme(t.value)}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 18, marginBottom: 4 }}>{t.emoji}</Text>
+                <Text style={[s.themeBtnLabel, theme === t.value && s.themeBtnLabelActive]}>{t.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
+
       {sections.map((sec) => (
         <View key={sec.title} style={s.section}>
           <Text style={s.sectionTitle}>{sec.title}</Text>
@@ -101,7 +173,6 @@ export default function MehrScreen() {
         </View>
       ))}
 
-      {/* Logout */}
       <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
         <Ionicons name="log-out-outline" size={18} color={C.rose} />
         <Text style={s.logoutText}>Abmelden</Text>
@@ -111,43 +182,3 @@ export default function MehrScreen() {
     </ScrollView>
   );
 }
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  content: { paddingBottom: 40 },
-  hero: {
-    backgroundColor: C.dark,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 24,
-  },
-  avatar: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: C.brand,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  avatarText: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  profileInfo: {},
-  profileName: { fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
-  profileEmail: { fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
-  section: { paddingHorizontal: 16, marginTop: 20 },
-  sectionTitle: { fontSize: 11, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 4 },
-  sectionCard: { backgroundColor: C.surface, borderRadius: 18, overflow: 'hidden', ...shadow.sm },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 },
-  menuItemBorder: { borderBottomWidth: 1, borderBottomColor: C.divider },
-  menuIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  menuLabel: { fontSize: 14, fontWeight: '600', color: C.text },
-  menuSub: { fontSize: 11, color: C.textMuted, marginTop: 1 },
-  logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, marginHorizontal: 16, marginTop: 20,
-    backgroundColor: C.roseBg, borderRadius: 16,
-    paddingVertical: 14,
-    borderWidth: 1, borderColor: `${C.rose}22`,
-  },
-  logoutText: { color: C.rose, fontWeight: '700', fontSize: 14 },
-  version: { textAlign: 'center', fontSize: 11, color: C.textMuted, marginTop: 20 },
-});
