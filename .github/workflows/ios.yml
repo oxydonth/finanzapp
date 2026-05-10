@@ -17,9 +17,9 @@ on:
       profile:
         description: 'EAS build profile'
         required: true
-        default: 'preview'
+        default: 'simulator'
         type: choice
-        options: [development, preview, production]
+        options: [development, preview, simulator, production]
 
 concurrency:
   group: ios-${{ github.ref }}
@@ -84,7 +84,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "profile=${{ github.event.inputs.profile }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "profile=production" >> $GITHUB_OUTPUT
+            echo "profile=simulator" >> $GITHUB_OUTPUT
           else
             echo "profile=preview" >> $GITHUB_OUTPUT
           fi
@@ -110,37 +110,3 @@ jobs:
           path: apps/mobile/build-output.json
           retention-days: 30
 
-  # ── Submit to App Store (main only) ───────────────────────────────────────
-  submit:
-    name: Submit to App Store
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup EAS CLI
-        run: npm install -g eas-cli
-
-      - name: Submit to App Store TestFlight
-        run: |
-          eas submit \
-            --platform ios \
-            --profile production \
-            --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        working-directory: apps/mobile
