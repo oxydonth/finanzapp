@@ -14,11 +14,9 @@ const envSchema = z.object({
     .string()
     .default('http://localhost:3001')
     .transform((v) => v.split(',')),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().default(587),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().default('Finanzapp <noreply@finanzapp.de>'),
+  RESEND_API_KEY: z.string().optional(),
+  MAIL_FROM: z.string().default('Finanzapp <noreply@finanzapp.de>'),
+  API_BASE_URL: z.string().default('http://localhost:3000'),
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   PAYPAL_REDIRECT_URI: z.string().optional(),

@@ -1,26 +1,16 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env';
 
-function createTransport() {
-  if (!env.SMTP_HOST) return null;
-  return nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465,
-    auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined,
-  });
-}
-
-const transporter = createTransport();
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 async function send(opts: { to: string; subject: string; html: string; text: string }) {
-  if (!transporter) {
-    // Dev fallback: log to console when no SMTP is configured
+  if (!resend) {
     console.log(`[MAIL] To: ${opts.to} | Subject: ${opts.subject}`);
     console.log(`[MAIL] ${opts.text}`);
     return;
   }
-  await transporter.sendMail({ from: env.SMTP_FROM, ...opts });
+  const { error } = await resend.emails.send({ from: env.MAIL_FROM, ...opts });
+  if (error) throw new Error(`Resend error: ${error.message}`);
 }
 
 export async function sendVerificationEmail(
@@ -28,10 +18,8 @@ export async function sendVerificationEmail(
   firstName: string,
   token: string,
 ): Promise<void> {
-  const frontendBase = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
-  const apiBase = `http://localhost:${env.API_PORT}`;
-  const verifyUrl = `${apiBase}/api/v1/auth/verify-email?token=${token}`;
-  const appUrl = frontendBase;
+  const verifyUrl = `${env.API_BASE_URL}/api/v1/auth/verify-email?token=${token}`;
+  const appUrl = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
 
   await send({
     to: email,
