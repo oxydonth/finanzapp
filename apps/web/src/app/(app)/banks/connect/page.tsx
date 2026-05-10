@@ -25,6 +25,7 @@ export default function VerbindenPage() {
   const [tan, setTan] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [tanChallenge, setTanChallenge] = useState('');
+  const [requiresTanInput, setRequiresTanInput] = useState(true);
   const [error, setError] = useState('');
 
   // Detect return from OAuth redirect (PayPal / Wise / Revolut)
@@ -51,7 +52,7 @@ export default function VerbindenPage() {
 
   const connectMutation = useMutation({
     mutationFn: (data: { bankCode: string; loginName: string; pin: string }) =>
-      api.post<{ sessionId?: string; tanChallenge?: string; connectionId?: string }>(
+      api.post<{ sessionId?: string; tanChallenge?: string; requiresTanInput?: boolean; connectionId?: string }>(
         '/banks/connections',
         data,
       ),
@@ -59,6 +60,7 @@ export default function VerbindenPage() {
       if (res.sessionId) {
         setSessionId(res.sessionId);
         setTanChallenge(res.tanChallenge ?? t('connectBank.enterTan'));
+        setRequiresTanInput(res.requiresTanInput ?? true);
         setStep('tan');
       } else {
         setStep('done');
@@ -240,22 +242,33 @@ export default function VerbindenPage() {
       {/* Step: TAN */}
       {step === 'tan' && (
         <div className="space-y-4">
-          <p className="text-slate-700 text-sm leading-relaxed">{tanChallenge}</p>
-          <div>
-            <label className="label">{t('connectBank.enterTan')}</label>
-            <input
-              value={tan}
-              onChange={(e) => setTan(e.target.value)}
-              placeholder={t('connectBank.enterTan')}
-              className="input"
-            />
+          <div className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3.5 ring-1 ring-slate-200/60 dark:ring-slate-700/60 leading-relaxed">
+            {tanChallenge || t('connectBank.enterTan')}
           </div>
+          {requiresTanInput ? (
+            <div>
+              <label className="label">{t('connectBank.enterTan')}</label>
+              <input
+                value={tan}
+                onChange={(e) => setTan(e.target.value)}
+                placeholder={t('connectBank.enterTan')}
+                className="input"
+                autoFocus
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 dark:text-slate-500">{t('connectBank.pushTanHint')}</p>
+          )}
           <button
             onClick={() => tanMutation.mutate(tan)}
-            disabled={tanMutation.isPending || !tan}
+            disabled={tanMutation.isPending || (requiresTanInput && !tan)}
             className="btn-primary w-full py-2.5"
           >
-            {tanMutation.isPending ? t('connectBank.verifyingTan') : t('connectBank.confirmTan')}
+            {tanMutation.isPending
+              ? t('connectBank.verifyingTan')
+              : requiresTanInput
+                ? t('connectBank.confirmTan')
+                : t('connectBank.confirmedInApp')}
           </button>
         </div>
       )}

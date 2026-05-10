@@ -259,6 +259,8 @@
     "enterTan": "TAN eingeben",
     "verifyingTan": "Prüfen...",
     "confirmTan": "TAN bestätigen",
+    "pushTanHint": "Bitte bestätige in deiner Banking-App und klicke dann auf die Schaltfläche unten.",
+    "confirmedInApp": "Ich habe in meiner App bestätigt",
     "successTitle": "Bank erfolgreich verbunden!",
     "successDesc": "Deine Konten werden jetzt synchronisiert.",
     "goToBanks": "Zu meinen Banken",

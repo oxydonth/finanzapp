@@ -31,7 +31,7 @@ export async function initiateConnection(
   blz: string,
   loginName: string,
   pin: string,
-): Promise<{ sessionId?: string; tanChallenge?: string; connectionId?: string }> {
+): Promise<{ sessionId?: string; tanChallenge?: string; requiresTanInput?: boolean; connectionId?: string }> {
   const bank = findBankByBlz(blz);
   if (!bank) throw new AppError(`Bank with BLZ ${blz} not supported`, 400);
 
@@ -49,6 +49,11 @@ export async function initiateConnection(
   } catch (err: unknown) {
     if (err instanceof TanRequiredError) {
       const sessionId = uuidv4();
+      const method = err.dialog.tanMethods[0];
+      // Decoupled/push-TAN: no code to enter (user approves in banking app)
+      const requiresTanInput = method
+        ? method.challengeValueRequired !== false && (method.maxLengthInput ?? 1) > 0
+        : true;
       pendingSessions.set(sessionId, {
         client, blz, loginName, pin, userId,
         tanDialog: err.dialog,
@@ -56,7 +61,7 @@ export async function initiateConnection(
         challengeText: err.challengeText,
       });
       setTimeout(() => pendingSessions.delete(sessionId), 10 * 60 * 1000);
-      return { sessionId, tanChallenge: err.challengeText || 'TAN required' };
+      return { sessionId, tanChallenge: err.challengeText || 'TAN required', requiresTanInput };
     }
     const msg = err instanceof Error ? err.message : String(err);
     throw new AppError(`FinTS connection failed: ${msg}`, 502);
