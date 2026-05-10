@@ -59,7 +59,9 @@ function CategoryCard({ cat }: { cat: Category }) {
           {cat.icon ?? '📁'}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-slate-900 leading-tight">{cat.name}</p>
+          <p className="text-sm font-medium text-slate-900 leading-tight">
+            {cat.isSystem ? t(`categories.names.${cat.id}`, { defaultValue: cat.name }) : cat.name}
+          </p>
           <p className="text-xs text-slate-400 mt-0.5">
             {cat.isSystem ? t('categories.system') : t('categories.custom')}
           </p>

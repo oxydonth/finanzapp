@@ -85,7 +85,7 @@ if (!i18n.isInitialized) {
         fa: { common: fa },
       },
       defaultNS: 'common',
-      fallbackLng: 'de',
+      fallbackLng: ['en', 'de'],
       detection: {
         order: ['localStorage', 'navigator'],
         caches: ['localStorage'],
