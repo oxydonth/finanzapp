@@ -169,25 +169,11 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
 
     for (const account of connection.accounts) {
       const revolAccount = account.id.split('_').slice(1).join('_');
-      const params = new URLSearchParams({
-        account: revolAccount,
-        from: from.toISOString(),
-        to: new Date().toISOString(),
-        count: '1000',
-      });
 
-      let res = await fetch(`${REVOLUT_API}/transactions?${params}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (res.status === 401) {
-        accessToken = await refreshAccessToken(connection);
-        res = await fetch(`${REVOLUT_API}/transactions?${params}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-      }
-      if (!res.ok) continue;
-
-      const txList = await res.json() as Array<{
+      // Revolut caps at 1000 per request; paginate via `to` cursor (newest-first)
+      let pageTo = new Date().toISOString();
+      let hasMore = true;
+      const txList: Array<{
         id: string;
         created_at: string;
         completed_at?: string;
@@ -198,7 +184,35 @@ export async function syncTransactions(bankConnectionId: string): Promise<void> 
         merchant?: { name?: string };
         counterpart?: { name?: string };
         type: string;
-      }>;
+      }> = [];
+
+      while (hasMore) {
+        const params = new URLSearchParams({
+          account: revolAccount,
+          from: from.toISOString(),
+          to: pageTo,
+          count: '1000',
+        });
+
+        let res = await fetch(`${REVOLUT_API}/transactions?${params}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.status === 401) {
+          accessToken = await refreshAccessToken(connection);
+          res = await fetch(`${REVOLUT_API}/transactions?${params}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+        }
+        if (!res.ok) break;
+
+        const page = await res.json() as typeof txList;
+        txList.push(...page);
+        if (page.length < 1000) {
+          hasMore = false;
+        } else {
+          pageTo = page[page.length - 1].created_at;
+        }
+      }
 
       // Update account balance
       const balRes = await fetch(`${REVOLUT_API}/accounts/${revolAccount}`, {

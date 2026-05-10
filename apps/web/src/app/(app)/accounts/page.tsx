@@ -22,7 +22,7 @@ export default function KontenPage() {
         <h1 className="page-title">{t('accounts.title')}</h1>
         <p className="text-slate-500 text-sm mt-1">
           {t('accounts.totalBalance')}{' '}
-          <span className="font-semibold text-slate-900 tabular-nums">{formatEUR(total)}</span>
+          <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums">{formatEUR(total)}</span>
         </p>
       </div>
 
@@ -36,15 +36,15 @@ export default function KontenPage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{a.accountType}</p>
-                <h3 className="font-semibold text-slate-900 mt-0.5">{a.accountName}</h3>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{a.accountName}</h3>
               </div>
               <span className="badge-green">{t('accounts.active')}</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums mb-0.5">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight tabular-nums mb-0.5">
               {formatEUR(Number(a.balanceCents))}
             </p>
             <p className="text-xs text-slate-400 font-mono mb-4">{a.ibanMasked}</p>
-            <div className="flex justify-between items-center text-xs text-slate-400 pt-3 border-t border-slate-50">
+            <div className="flex justify-between items-center text-xs text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
               <span>{a.ownerName}</span>
               {a.balanceDate && <span>{t('accounts.asOf')} {formatDate(a.balanceDate)}</span>}
             </div>
@@ -54,7 +54,7 @@ export default function KontenPage() {
 
       {!isLoading && accounts.length === 0 && (
         <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-7 h-7 text-slate-400" />
           </div>
           <p className="text-slate-500 font-medium mb-1">{t('accounts.noAccounts')}</p>

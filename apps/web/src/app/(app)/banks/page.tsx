@@ -48,10 +48,10 @@ export default function BankenPage() {
 
       {!isLoading && connections.length === 0 && (
         <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-7 h-7 text-slate-400" />
           </div>
-          <p className="text-slate-900 font-semibold mb-1">{t('banks.noBanks')}</p>
+          <p className="text-slate-900 dark:text-slate-100 font-semibold mb-1">{t('banks.noBanks')}</p>
           <Link href="/banks/connect" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
             {t('banks.connectBankNow')}
           </Link>
@@ -64,11 +64,11 @@ export default function BankenPage() {
           return (
             <div key={conn.id} className="card p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
                   <Building2 className="w-5 h-5 text-slate-500" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">{conn.bankName}</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100">{conn.bankName}</h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {t('banks.bankCode')} {conn.bankCode} · {t('banks.lastSync')}{' '}
                     {conn.lastSyncAt ? formatDate(conn.lastSyncAt) : t('banks.never')}

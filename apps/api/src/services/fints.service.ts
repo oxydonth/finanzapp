@@ -1,4 +1,7 @@
-import { PinTanClient, SEPAAccount, Statement, Transaction as FintsTransaction } from 'node-fints';
+import {
+  PinTanClient, SEPAAccount, Statement, Transaction as FintsTransaction,
+  TanRequiredError, HKTAN, HISPA, Dialog,
+} from 'node-fints';
 import { prisma } from '../config/database';
 import { encrypt, decrypt } from './encryption.service';
 import { maskIBAN } from '@finanzapp/utils';
@@ -15,6 +18,9 @@ interface PendingSession {
   pin: string;
   userId: string;
   bankConnectionId?: string;
+  tanDialog?: Dialog;
+  transactionReference?: string;
+  challengeText?: string;
 }
 
 // In-memory TAN challenge store (use Redis in production)
@@ -41,14 +47,18 @@ export async function initiateConnection(
   try {
     accounts = await client.accounts();
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    // Some banks require a TAN before returning accounts
-    if (msg.toLowerCase().includes('tan') || msg.toLowerCase().includes('3920')) {
+    if (err instanceof TanRequiredError) {
       const sessionId = uuidv4();
-      pendingSessions.set(sessionId, { client, blz, loginName, pin, userId });
+      pendingSessions.set(sessionId, {
+        client, blz, loginName, pin, userId,
+        tanDialog: err.dialog,
+        transactionReference: err.transactionReference,
+        challengeText: err.challengeText,
+      });
       setTimeout(() => pendingSessions.delete(sessionId), 10 * 60 * 1000);
-      return { sessionId, tanChallenge: msg };
+      return { sessionId, tanChallenge: err.challengeText || 'TAN required' };
     }
+    const msg = err instanceof Error ? err.message : String(err);
     throw new AppError(`FinTS connection failed: ${msg}`, 502);
   }
 
@@ -59,26 +69,54 @@ export async function initiateConnection(
 export async function submitTan(
   userId: string,
   sessionId: string,
-  _tan: string,
+  tan: string,
 ): Promise<{ connectionId: string }> {
   const session = pendingSessions.get(sessionId);
   if (!session) throw new AppError('Session expired or not found', 404);
   if (session.userId !== userId) throw new AppError('Session expired or not found', 404);
   pendingSessions.delete(sessionId);
 
-  // Re-fetch accounts after TAN submission using the saved dialog
   let accounts: SEPAAccount[];
   try {
-    // Re-authenticate with the stored credentials + TAN hint
-    const bank = findBankByBlz(session.blz)!;
-    const clientWithTan = new PinTanClient({
-      blz: session.blz,
-      name: session.loginName,
-      pin: session.pin,
-      url: bank.fintsUrl,
-      productId: 'finanzapp-v1',
-    });
-    accounts = await clientWithTan.accounts();
+    if (session.tanDialog && session.transactionReference) {
+      // Continue the stalled FinTS dialog by sending the TAN response.
+      // createDialog(savedDialog) uses Object.assign so it copies dialogId, msgNo, tanMethods etc.
+      const dialog = session.client.createDialog(session.tanDialog);
+      dialog.msgNo = dialog.msgNo + 1;
+      const request = session.client.createRequest(dialog, [
+        new HKTAN({
+          segNo: 3,
+          version: 6,
+          process: '2',
+          segmentReference: 'HKSPA',
+          aref: session.transactionReference,
+          medium: dialog.tanMethods[0]?.name ?? '',
+        }),
+      ], tan);
+      const response = await dialog.send(request);
+      await dialog.end();
+      const hispa = response.findSegment(HISPA);
+      accounts = hispa.accounts;
+      // enrich with account owner names from HIUPD
+      accounts.forEach((acc) => {
+        const hiupdMatch = dialog.hiupd?.find((h) => h.account.iban === acc.iban);
+        if (hiupdMatch) {
+          acc.accountOwnerName = hiupdMatch.account.accountOwnerName1;
+          acc.accountName = hiupdMatch.account.accountName;
+        }
+      });
+    } else {
+      // Decoupled push-TAN (e.g. DKB app approval): just retry — user approved externally
+      const bank = findBankByBlz(session.blz)!;
+      const retryClient = new PinTanClient({
+        blz: session.blz,
+        name: session.loginName,
+        pin: session.pin,
+        url: bank.fintsUrl,
+        productId: 'finanzapp-v1',
+      });
+      accounts = await retryClient.accounts();
+    }
   } catch (err: unknown) {
     throw new AppError(`TAN verification failed: ${err instanceof Error ? err.message : err}`, 502);
   }

@@ -61,7 +61,7 @@ export default function TransaktionenPage() {
           <>
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
+                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
                   <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t('transactions.date')}</th>
                   <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t('transactions.recipientSender')}</th>
                   <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t('transactions.category')}</th>
@@ -70,10 +70,10 @@ export default function TransaktionenPage() {
               </thead>
               <tbody>
                 {transactions.map((tx) => (
-                  <tr key={tx.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
+                  <tr key={tx.id} className="border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-5 py-3.5 text-sm text-slate-400 whitespace-nowrap tabular-nums">{formatDate(tx.bookingDate)}</td>
                     <td className="px-5 py-3.5">
-                      <p className="text-sm font-medium text-slate-900 leading-tight">{tx.merchantName ?? tx.creditorName ?? '—'}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight">{tx.merchantName ?? tx.creditorName ?? '—'}</p>
                       {tx.purpose && <p className="text-xs text-slate-400 truncate max-w-xs mt-0.5">{tx.purpose}</p>}
                     </td>
                     <td className="px-5 py-3.5">
@@ -85,7 +85,7 @@ export default function TransaktionenPage() {
                         <span className="text-xs text-slate-300">—</span>
                       )}
                     </td>
-                    <td className={`px-5 py-3.5 text-sm font-semibold text-right whitespace-nowrap tabular-nums ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                    <td className={`px-5 py-3.5 text-sm font-semibold text-right whitespace-nowrap tabular-nums ${tx.type === 'CREDIT' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'}`}>
                       {tx.type === 'CREDIT' ? '+' : ''}{formatEUR(Number(tx.amountCents))}
                     </td>
                   </tr>
@@ -94,7 +94,7 @@ export default function TransaktionenPage() {
             </table>
 
             {data && data.totalPages > 1 && (
-              <div className="flex justify-between items-center px-5 py-3.5 border-t border-slate-100 bg-slate-50/40">
+              <div className="flex justify-between items-center px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/30">
                 <span className="text-xs text-slate-400">{t('transactions.page', { page, total: data.totalPages })}</span>
                 <div className="flex gap-2">
                   <button

@@ -50,7 +50,7 @@ function CategoryCard({ cat }: { cat: Category }) {
     <div className="card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-slate-50/80 transition-colors text-left"
+        className="w-full flex items-center gap-3 p-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors text-left"
       >
         <span
           className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
@@ -59,7 +59,7 @@ function CategoryCard({ cat }: { cat: Category }) {
           {cat.icon ?? '📁'}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-slate-900 leading-tight">
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-tight">
             {cat.isSystem ? t(`categories.names.${cat.id}`, { defaultValue: cat.name }) : cat.name}
           </p>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -73,7 +73,7 @@ function CategoryCard({ cat }: { cat: Category }) {
       </button>
 
       {open && (
-        <div className="border-t border-slate-100 p-4 bg-slate-50/40 space-y-4">
+        <div className="border-t border-slate-100 dark:border-slate-800 p-4 bg-slate-50/40 dark:bg-slate-800/30 space-y-4">
           {isLoading ? (
             <p className="text-xs text-slate-400">{t('categories.loading')}</p>
           ) : (
@@ -83,9 +83,9 @@ function CategoryCard({ cat }: { cat: Category }) {
               )}
               <div className="space-y-2">
                 {rules.map((rule) => (
-                  <div key={rule.id} className="flex items-center gap-2 text-sm bg-white rounded-lg px-3 py-2 ring-1 ring-slate-100">
+                  <div key={rule.id} className="flex items-center gap-2 text-sm bg-white dark:bg-slate-800 rounded-lg px-3 py-2 ring-1 ring-slate-100 dark:ring-slate-700">
                     <span className="badge-violet shrink-0">{FIELD_LABELS[rule.field] ?? rule.field}</span>
-                    <span className="font-mono text-slate-700 flex-1 truncate text-xs">"{rule.pattern}"</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300 flex-1 truncate text-xs">"{rule.pattern}"</span>
                     {rule.priority !== 0 && <span className="text-[11px] text-slate-400 shrink-0">P{rule.priority}</span>}
                     <button
                       onClick={() => deleteRule.mutate(rule.id)}
