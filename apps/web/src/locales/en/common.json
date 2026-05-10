@@ -258,6 +258,13 @@
     "successDesc": "Your accounts are now being synced.",
     "goToBanks": "Go to my banks",
     "connectionFailed": "Connection failed",
-    "tanFailed": "TAN failed"
+    "tanFailed": "TAN failed",
+    "chooseProvider": "How would you like to connect?",
+    "germanBank": "German bank (FinTS)",
+    "germanBankDesc": "Sparkasse, Deutsche Bank, ING, Comdirect and more",
+    "paypalDesc": "Import PayPal transactions automatically",
+    "paypalNote": "You will be redirected to PayPal to securely authorise read-only access to your transaction history.",
+    "paypalButton": "Connect with PayPal",
+    "paypalConnecting": "Redirecting to PayPal..."
   }
 }

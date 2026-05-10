@@ -258,6 +258,13 @@
     "successDesc": "Deine Konten werden jetzt synchronisiert.",
     "goToBanks": "Zu meinen Banken",
     "connectionFailed": "Verbindung fehlgeschlagen",
-    "tanFailed": "TAN fehlgeschlagen"
+    "tanFailed": "TAN fehlgeschlagen",
+    "chooseProvider": "Wie möchtest du dich verbinden?",
+    "germanBank": "Deutsche Bank (FinTS)",
+    "germanBankDesc": "Sparkasse, Deutsche Bank, ING, Comdirect und mehr",
+    "paypalDesc": "PayPal-Transaktionen automatisch importieren",
+    "paypalNote": "Du wirst zu PayPal weitergeleitet, um den Lesezugriff auf deine Transaktionshistorie sicher zu autorisieren.",
+    "paypalButton": "Mit PayPal verbinden",
+    "paypalConnecting": "Weiterleitung zu PayPal..."
   }
 }

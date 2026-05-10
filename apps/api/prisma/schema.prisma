@@ -27,6 +27,11 @@ enum BudgetPeriod {
   YEARLY
 }
 
+enum ConnectorType {
+  FINTS
+  PAYPAL
+}
+
 enum SyncStatus {
   IDLE
   SYNCING
@@ -69,6 +74,8 @@ model BankConnection {
   id                    String      @id @default(uuid())
   userId                String
   user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  connectorType         ConnectorType @default(FINTS)
 
   bankCode              String
   bankName              String

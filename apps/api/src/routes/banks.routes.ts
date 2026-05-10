@@ -3,8 +3,11 @@ import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/database';
 import * as fintsService from '../services/fints.service';
+import * as paypalService from '../services/paypal.service';
 import { getAllBanks, searchBanks, findBankByBlz } from '@finanzapp/config';
+import { ConnectorType } from '@finanzapp/types';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
+import { env } from '../config/env';
 
 const router = Router();
 
@@ -20,6 +23,31 @@ router.get('/search', async (req, res, next) => {
     res.json({ data: searchBanks(q) });
   } catch (e) { next(e); }
 });
+
+// ── PayPal OAuth ──────────────────────────────────────────────────────────────
+
+router.get('/paypal/auth-url', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const authUrl = paypalService.getAuthUrl(req.userId!);
+    res.json({ data: { authUrl, configured: true } });
+  } catch (e) { next(e); }
+});
+
+// PayPal redirects the user's browser here after they approve
+router.get('/paypal/callback', async (req, res, next) => {
+  const frontendBase = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
+  try {
+    const { code, state } = z.object({ code: z.string(), state: z.string() }).parse(req.query);
+    await paypalService.handleCallback(code, state);
+    res.redirect(`${frontendBase}/banks/connect?paypal=connected`);
+  } catch (e) {
+    const msg = e instanceof Error ? encodeURIComponent(e.message) : 'unknown_error';
+    res.redirect(`${frontendBase}/banks/connect?paypal=error&msg=${msg}`);
+    next; // keep TS happy, but we've already responded
+  }
+});
+
+// ── FinTS bank registry ───────────────────────────────────────────────────────
 
 router.get('/:blz', async (req, res, next) => {
   try {
@@ -56,8 +84,8 @@ router.get('/connections', authenticate, async (req: AuthRequest, res, next) => 
       include: { accounts: { where: { isHidden: false } } },
       orderBy: { createdAt: 'asc' },
     });
-    const safe = connections.map((conn: any) => {
-      const { pinEncrypted: _p, pinIv: _iv, loginNameEncrypted: _ln, ...c } = conn as typeof conn & { pinEncrypted: string; pinIv: string; loginNameEncrypted: string };
+    const safe = connections.map((conn) => {
+      const { pinEncrypted: _p, pinIv: _iv, loginNameEncrypted: _ln, ...c } = conn;
       void _p; void _iv; void _ln;
       return c;
     });
@@ -74,6 +102,7 @@ router.get('/connections/:id', authenticate, async (req: AuthRequest, res, next)
     if (!conn) throw new NotFoundError('BankConnection');
     if (conn.userId !== req.userId) throw new ForbiddenError();
     const { pinEncrypted: _p, pinIv: _iv, loginNameEncrypted: _ln, ...safe } = conn;
+    void _p; void _iv; void _ln;
     res.json({ data: safe });
   } catch (e) { next(e); }
 });
@@ -83,7 +112,12 @@ router.post('/connections/:id/sync', authenticate, async (req: AuthRequest, res,
     const conn = await prisma.bankConnection.findUnique({ where: { id: req.params.id } });
     if (!conn) throw new NotFoundError('BankConnection');
     if (conn.userId !== req.userId) throw new ForbiddenError();
-    fintsService.syncTransactions(req.params.id).catch(console.error);
+
+    if (conn.connectorType === ConnectorType.PAYPAL) {
+      paypalService.syncTransactions(req.params.id).catch(console.error);
+    } else {
+      fintsService.syncTransactions(req.params.id).catch(console.error);
+    }
     res.json({ data: { message: 'Sync started' } });
   } catch (e) { next(e); }
 });

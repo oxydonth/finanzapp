@@ -1,20 +1,23 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../../lib/api';
 import type { BankRegistryEntry } from '@finanzapp/config';
-import { Search, ChevronRight, Lock, CheckCircle } from 'lucide-react';
+import { Search, ChevronRight, Lock, CheckCircle, Building2, Wallet } from 'lucide-react';
 
-type Step = 'select' | 'credentials' | 'tan' | 'done';
-
-const STEP_LABELS: Step[] = ['select', 'credentials', 'tan', 'done'];
+type Step = 'provider' | 'select' | 'credentials' | 'tan' | 'paypal' | 'done';
+const FINTS_STEPS: Step[] = ['provider', 'select', 'credentials', 'tan', 'done'];
+const PAYPAL_STEPS: Step[] = ['provider', 'paypal', 'done'];
 
 export default function VerbindenPage() {
   const router = useRouter();
+  const params = useSearchParams();
   const { t } = useTranslation();
-  const [step, setStep] = useState<Step>('select');
+
+  const [step, setStep] = useState<Step>('provider');
+  const [provider, setProvider] = useState<'fints' | 'paypal' | null>(null);
   const [bankSearch, setBankSearch] = useState('');
   const [selectedBank, setSelectedBank] = useState<BankRegistryEntry | null>(null);
   const [creds, setCreds] = useState({ loginName: '', pin: '' });
@@ -23,9 +26,22 @@ export default function VerbindenPage() {
   const [tanChallenge, setTanChallenge] = useState('');
   const [error, setError] = useState('');
 
+  // Detect return from PayPal OAuth redirect
+  useEffect(() => {
+    const paypalParam = params.get('paypal');
+    if (paypalParam === 'connected') {
+      setProvider('paypal');
+      setStep('done');
+    } else if (paypalParam === 'error') {
+      setProvider('paypal');
+      setError(params.get('msg') ?? t('connectBank.connectionFailed'));
+    }
+  }, [params, t]);
+
   const { data: banks = [] } = useQuery<BankRegistryEntry[]>({
     queryKey: ['banks'],
     queryFn: () => api.get<BankRegistryEntry[]>('/banks'),
+    enabled: step === 'select',
   });
 
   const filtered = bankSearch
@@ -60,7 +76,20 @@ export default function VerbindenPage() {
     onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.tanFailed')),
   });
 
-  const currentStepIndex = STEP_LABELS.indexOf(step);
+  const paypalAuthMutation = useMutation({
+    mutationFn: () => api.get<{ authUrl: string }>('/banks/paypal/auth-url'),
+    onSuccess: (res) => { window.location.href = res.authUrl; },
+    onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.connectionFailed')),
+  });
+
+  const steps = provider === 'paypal' ? PAYPAL_STEPS : FINTS_STEPS;
+  const currentStepIndex = steps.indexOf(step);
+
+  function chooseProvider(p: 'fints' | 'paypal') {
+    setProvider(p);
+    setError('');
+    setStep(p === 'paypal' ? 'paypal' : 'select');
+  }
 
   return (
     <div className="p-8 max-w-2xl mx-auto animate-fade-in">
@@ -68,9 +97,11 @@ export default function VerbindenPage() {
 
       {/* Progress stepper */}
       <div className="flex items-center gap-1 mb-8">
-        {STEP_LABELS.map((s, i) => {
-          const done = i < currentStepIndex;
-          const active = i === currentStepIndex;
+        {steps.filter((s) => s !== 'tan' || step === 'tan').map((s, i) => {
+          const visibleSteps = steps.filter((x) => x !== 'tan' || step === 'tan');
+          const idx = visibleSteps.indexOf(s);
+          const done = idx < currentStepIndex;
+          const active = s === step;
           return (
             <div key={s} className="flex items-center gap-1 flex-1 last:flex-none">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
@@ -78,7 +109,7 @@ export default function VerbindenPage() {
               }`}>
                 {done ? <CheckCircle size={14} /> : i + 1}
               </div>
-              {i < STEP_LABELS.length - 1 && (
+              {i < visibleSteps.length - 1 && (
                 <div className={`flex-1 h-px mx-1 transition-all ${done ? 'bg-emerald-300' : 'bg-slate-200'}`} />
               )}
             </div>
@@ -90,6 +121,43 @@ export default function VerbindenPage() {
         <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">{error}</div>
       )}
 
+      {/* Step: choose provider */}
+      {step === 'provider' && (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500 mb-5">{t('connectBank.chooseProvider')}</p>
+          <button
+            onClick={() => chooseProvider('fints')}
+            className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0 group-hover:bg-brand-100 transition-colors">
+              <Building2 size={20} className="text-brand-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
+                {t('connectBank.germanBank')}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.germanBankDesc')}</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-brand-400 transition-colors" />
+          </button>
+
+          <button
+            onClick={() => chooseProvider('paypal')}
+            className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+              <Wallet size={20} className="text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">PayPal</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.paypalDesc')}</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-400 transition-colors" />
+          </button>
+        </div>
+      )}
+
+      {/* Step: select German bank */}
       {step === 'select' && (
         <div>
           <div className="relative mb-4">
@@ -122,6 +190,7 @@ export default function VerbindenPage() {
         </div>
       )}
 
+      {/* Step: FinTS credentials */}
       {step === 'credentials' && selectedBank && (
         <div>
           <div className="card p-4 mb-6">
@@ -161,6 +230,7 @@ export default function VerbindenPage() {
         </div>
       )}
 
+      {/* Step: TAN */}
       {step === 'tan' && (
         <div className="space-y-4">
           <p className="text-slate-700 text-sm leading-relaxed">{tanChallenge}</p>
@@ -183,6 +253,34 @@ export default function VerbindenPage() {
         </div>
       )}
 
+      {/* Step: PayPal OAuth */}
+      {step === 'paypal' && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-4 p-5 card">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+              <Wallet size={22} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">PayPal</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.paypalDesc')}</p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">{t('connectBank.paypalNote')}</p>
+          <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 rounded-xl p-3.5 ring-1 ring-slate-200/60">
+            <Lock size={13} className="text-slate-400 shrink-0 mt-0.5" />
+            {t('connectBank.securityNote')}
+          </div>
+          <button
+            onClick={() => paypalAuthMutation.mutate()}
+            disabled={paypalAuthMutation.isPending}
+            className="btn-primary w-full py-2.5"
+          >
+            {paypalAuthMutation.isPending ? t('connectBank.paypalConnecting') : t('connectBank.paypalButton')}
+          </button>
+        </div>
+      )}
+
+      {/* Step: done */}
       {step === 'done' && (
         <div className="text-center py-12">
           <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-5">

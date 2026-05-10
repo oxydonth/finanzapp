@@ -26,6 +26,11 @@ export enum SyncStatus {
   TAN_REQUIRED = 'TAN_REQUIRED',
 }
 
+export enum ConnectorType {
+  FINTS = 'FINTS',
+  PAYPAL = 'PAYPAL',
+}
+
 export enum TanMethod {
   CHIPTAN_OPTIC = 'CHIPTAN_OPTIC',
   CHIPTAN_USB = 'CHIPTAN_USB',
