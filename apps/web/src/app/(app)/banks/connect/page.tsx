@@ -5,12 +5,15 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../../lib/api';
 import type { BankRegistryEntry } from '@finanzapp/config';
-import { Search, ChevronRight, Lock, CheckCircle, Building2, Wallet } from 'lucide-react';
+import { Search, ChevronRight, Lock, CheckCircle, Building2, Wallet, Globe } from 'lucide-react';
 
-type Step = 'provider' | 'select' | 'credentials' | 'tan' | 'oauth' | 'done';
+type Step = 'provider' | 'select' | 'credentials' | 'tan' | 'oauth' | 'gc-select' | 'done';
 type OAuthProvider = 'paypal' | 'wise' | 'revolut';
 const FINTS_STEPS: Step[] = ['provider', 'select', 'credentials', 'tan', 'done'];
 const OAUTH_STEPS: Step[] = ['provider', 'oauth', 'done'];
+const GC_STEPS: Step[] = ['provider', 'gc-select', 'oauth', 'done'];
+
+interface GcInstitution { id: string; name: string; bic: string; logo: string }
 
 export default function VerbindenPage() {
   const router = useRouter();
@@ -18,8 +21,9 @@ export default function VerbindenPage() {
   const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>('provider');
-  const [provider, setProvider] = useState<'fints' | OAuthProvider | null>(null);
+  const [provider, setProvider] = useState<'fints' | 'gocardless' | OAuthProvider | null>(null);
   const [bankSearch, setBankSearch] = useState('');
+  const [gcSearch, setGcSearch] = useState('');
   const [selectedBank, setSelectedBank] = useState<BankRegistryEntry | null>(null);
   const [creds, setCreds] = useState({ loginName: '', pin: '' });
   const [tan, setTan] = useState('');
@@ -28,33 +32,48 @@ export default function VerbindenPage() {
   const [requiresTanInput, setRequiresTanInput] = useState(true);
   const [error, setError] = useState('');
 
-  // Detect return from OAuth redirect (PayPal / Wise / Revolut)
+  // Detect return from OAuth / GoCardless redirect
   useEffect(() => {
     for (const p of ['paypal', 'wise', 'revolut'] as OAuthProvider[]) {
       const val = params.get(p);
       if (val === 'connected') { setProvider(p); setStep('done'); return; }
       if (val === 'error') { setProvider(p); setError(params.get('msg') ?? t('connectBank.connectionFailed')); return; }
     }
+    const gc = params.get('gocardless');
+    if (gc === 'connected') { setProvider('gocardless'); setStep('done'); return; }
+    if (gc === 'error') { setProvider('gocardless'); setError(params.get('msg') ?? t('connectBank.connectionFailed')); return; }
   }, [params, t]);
 
+  // FinTS bank registry
   const { data: banks = [] } = useQuery<BankRegistryEntry[]>({
     queryKey: ['banks'],
     queryFn: () => api.get<BankRegistryEntry[]>('/banks'),
     enabled: step === 'select',
   });
 
-  const filtered = bankSearch
+  // GoCardless institutions
+  const { data: gcInstitutions = [], isLoading: gcLoading } = useQuery<GcInstitution[]>({
+    queryKey: ['gc-institutions'],
+    queryFn: () => api.get<GcInstitution[]>('/banks/gocardless/institutions?country=DE'),
+    enabled: step === 'gc-select',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const filteredBanks = bankSearch
     ? banks.filter((b) =>
-        b.name.toLowerCase().includes(bankSearch.toLowerCase()) ||
-        b.blz.includes(bankSearch),
-      )
+        b.name.toLowerCase().includes(bankSearch.toLowerCase()) || b.blz.includes(bankSearch))
     : banks;
+
+  const filteredGc = gcSearch
+    ? gcInstitutions.filter((i) =>
+        i.name.toLowerCase().includes(gcSearch.toLowerCase()) ||
+        (i.bic && i.bic.toLowerCase().includes(gcSearch.toLowerCase())))
+    : gcInstitutions;
 
   const connectMutation = useMutation({
     mutationFn: (data: { bankCode: string; loginName: string; pin: string }) =>
       api.post<{ sessionId?: string; tanChallenge?: string; requiresTanInput?: boolean; connectionId?: string }>(
-        '/banks/connections',
-        data,
+        '/banks/connections', data,
       ),
     onSuccess: (res) => {
       if (res.sessionId) {
@@ -70,8 +89,7 @@ export default function VerbindenPage() {
   });
 
   const tanMutation = useMutation({
-    mutationFn: (t: string) =>
-      api.post('/banks/connections/dummy/tan', { sessionId, tan: t }),
+    mutationFn: (t: string) => api.post('/banks/connections/dummy/tan', { sessionId, tan: t }),
     onSuccess: () => setStep('done'),
     onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.tanFailed')),
   });
@@ -82,14 +100,29 @@ export default function VerbindenPage() {
     onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.connectionFailed')),
   });
 
-  const steps = provider === 'fints' || provider === null ? FINTS_STEPS : OAUTH_STEPS;
+  const gcRequisitionMutation = useMutation({
+    mutationFn: (institutionId: string) =>
+      api.post<{ link: string }>('/banks/gocardless/requisition', { institutionId }),
+    onSuccess: (res) => { window.location.href = res.link; },
+    onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.connectionFailed')),
+  });
+
+  const steps = provider === 'fints' || provider === null
+    ? FINTS_STEPS
+    : provider === 'gocardless'
+      ? GC_STEPS
+      : OAUTH_STEPS;
   const currentStepIndex = steps.indexOf(step);
 
-  function chooseProvider(p: 'fints' | OAuthProvider) {
+  function chooseProvider(p: 'fints' | 'gocardless' | OAuthProvider) {
     setProvider(p);
     setError('');
-    setStep(p === 'fints' ? 'select' : 'oauth');
+    if (p === 'fints') setStep('select');
+    else if (p === 'gocardless') setStep('gc-select');
+    else setStep('oauth');
   }
+
+  const visibleSteps = steps.filter((s) => s !== 'tan' || step === 'tan');
 
   return (
     <div className="p-8 max-w-2xl mx-auto animate-fade-in">
@@ -97,8 +130,7 @@ export default function VerbindenPage() {
 
       {/* Progress stepper */}
       <div className="flex items-center gap-1 mb-8">
-        {steps.filter((s) => s !== 'tan' || step === 'tan').map((s, i) => {
-          const visibleSteps = steps.filter((x) => x !== 'tan' || step === 'tan');
+        {visibleSteps.map((s, i) => {
           const idx = visibleSteps.indexOf(s);
           const done = idx < currentStepIndex;
           const active = s === step;
@@ -125,6 +157,23 @@ export default function VerbindenPage() {
       {step === 'provider' && (
         <div className="space-y-3">
           <p className="text-sm text-slate-500 mb-5">{t('connectBank.chooseProvider')}</p>
+
+          <button
+            onClick={() => chooseProvider('gocardless')}
+            className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 group-hover:bg-indigo-100 transition-colors">
+              <Globe size={20} className="text-indigo-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                {t('connectBank.euBank')}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.euBankDesc')}</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+          </button>
+
           <button
             onClick={() => chooseProvider('fints')}
             className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
@@ -166,7 +215,53 @@ export default function VerbindenPage() {
         </div>
       )}
 
-      {/* Step: select German bank */}
+      {/* Step: GoCardless institution select */}
+      {step === 'gc-select' && (
+        <div>
+          <div className="relative mb-4">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              placeholder={t('connectBank.euBankSearch')}
+              value={gcSearch}
+              onChange={(e) => setGcSearch(e.target.value)}
+              className="input pl-9"
+              autoFocus
+            />
+          </div>
+          {gcLoading ? (
+            <p className="text-sm text-slate-400 text-center py-8">{t('connectBank.loading')}</p>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+              {filteredGc.map((inst) => (
+                <button
+                  key={inst.id}
+                  onClick={() => { setStep('oauth'); gcRequisitionMutation.mutate(inst.id); }}
+                  disabled={gcRequisitionMutation.isPending}
+                  className="w-full flex items-center justify-between p-4 card hover:shadow-card-hover transition-all text-left group"
+                >
+                  <div className="flex items-center gap-3">
+                    {inst.logo
+                      ? <img src={inst.logo} alt="" className="w-8 h-8 rounded-lg object-contain" />
+                      : <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center"><Globe size={14} className="text-slate-400" /></div>
+                    }
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 transition-colors">{inst.name}</p>
+                      {inst.bic && <p className="text-xs text-slate-400">{inst.bic}</p>}
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-400 transition-colors shrink-0" />
+                </button>
+              ))}
+              {filteredGc.length === 0 && !gcLoading && (
+                <p className="text-sm text-slate-400 text-center py-8">{t('banks.noBanksFound')}</p>
+              )}
+            </div>
+          )}
+          <p className="text-[11px] text-slate-400 mt-4 text-center">{t('connectBank.poweredBy')}</p>
+        </div>
+      )}
+
+      {/* Step: select German bank (FinTS) */}
       {step === 'select' && (
         <div>
           <div className="relative mb-4">
@@ -179,20 +274,20 @@ export default function VerbindenPage() {
             />
           </div>
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-            {filtered.map((bank) => (
+            {filteredBanks.map((bank) => (
               <button
                 key={bank.blz}
                 onClick={() => { setSelectedBank(bank); setStep('credentials'); }}
                 className="w-full flex items-center justify-between p-4 card hover:shadow-card-hover transition-all text-left group"
               >
                 <div>
-                  <p className="font-medium text-slate-900 group-hover:text-brand-600 transition-colors">{bank.name}</p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-brand-600 transition-colors">{bank.name}</p>
                   <p className="text-xs text-slate-400">{t('banks.bankCode')} {bank.blz}</p>
                 </div>
                 <ChevronRight size={16} className="text-slate-300 group-hover:text-brand-400 transition-colors" />
               </button>
             ))}
-            {filtered.length === 0 && (
+            {filteredBanks.length === 0 && (
               <p className="text-sm text-slate-400 text-center py-8">{t('banks.noBanksFound')}</p>
             )}
           </div>
@@ -203,7 +298,7 @@ export default function VerbindenPage() {
       {step === 'credentials' && selectedBank && (
         <div>
           <div className="card p-4 mb-6">
-            <p className="font-semibold text-slate-900">{selectedBank.name}</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">{selectedBank.name}</p>
             <p className="text-sm text-slate-400">{t('banks.bankCode')} {selectedBank.blz}</p>
           </div>
           <div className="space-y-4">
@@ -224,7 +319,7 @@ export default function VerbindenPage() {
                 className="input"
               />
             </div>
-            <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 rounded-xl p-3.5 ring-1 ring-slate-200/60">
+            <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3.5 ring-1 ring-slate-200/60 dark:ring-slate-700/60">
               <Lock size={13} className="text-slate-400 shrink-0 mt-0.5" />
               {t('connectBank.securityNote')}
             </div>
@@ -273,20 +368,20 @@ export default function VerbindenPage() {
         </div>
       )}
 
-      {/* Step: OAuth (PayPal / Wise / Revolut) */}
-      {step === 'oauth' && provider && provider !== 'fints' && (
+      {/* Step: OAuth redirect (PayPal / Wise / Revolut) */}
+      {step === 'oauth' && provider && provider !== 'fints' && provider !== 'gocardless' && (
         <div className="space-y-5">
           <div className="flex items-center gap-4 p-5 card">
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
               <Wallet size={22} className="text-blue-600" />
             </div>
             <div>
-              <p className="font-semibold text-slate-900 capitalize">{provider}</p>
+              <p className="font-semibold text-slate-900 dark:text-slate-100 capitalize">{provider}</p>
               <p className="text-xs text-slate-400 mt-0.5">{t(`connectBank.${provider}Desc`)}</p>
             </div>
           </div>
-          <p className="text-sm text-slate-600 leading-relaxed">{t('connectBank.oauthNote')}</p>
-          <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 rounded-xl p-3.5 ring-1 ring-slate-200/60">
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{t('connectBank.oauthNote')}</p>
+          <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3.5 ring-1 ring-slate-200/60 dark:ring-slate-700/60">
             <Lock size={13} className="text-slate-400 shrink-0 mt-0.5" />
             {t('connectBank.securityNote')}
           </div>
@@ -300,13 +395,23 @@ export default function VerbindenPage() {
         </div>
       )}
 
+      {/* Step: OAuth redirect (GoCardless — redirecting to bank) */}
+      {step === 'oauth' && provider === 'gocardless' && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 animate-pulse">
+            <Globe className="w-8 h-8 text-indigo-500" />
+          </div>
+          <p className="text-slate-500 text-sm">{t('connectBank.redirectingToBank')}</p>
+        </div>
+      )}
+
       {/* Step: done */}
       {step === 'done' && (
         <div className="text-center py-12">
           <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle className="w-8 h-8 text-emerald-500" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{t('connectBank.successTitle')}</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{t('connectBank.successTitle')}</h2>
           <p className="text-slate-500 text-sm mb-7">{t('connectBank.successDesc')}</p>
           <button onClick={() => router.push('/banks')} className="btn-primary px-8 py-2.5">
             {t('connectBank.goToBanks')}

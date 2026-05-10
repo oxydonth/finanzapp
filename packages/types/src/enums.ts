@@ -31,6 +31,7 @@ export enum ConnectorType {
   PAYPAL = 'PAYPAL',
   WISE = 'WISE',
   REVOLUT = 'REVOLUT',
+  GOCARDLESS = 'GOCARDLESS',
 }
 
 export enum TanMethod {

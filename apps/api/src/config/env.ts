@@ -26,6 +26,9 @@ const envSchema = z.object({
   REVOLUT_CLIENT_ID: z.string().optional(),
   REVOLUT_CLIENT_SECRET: z.string().optional(),
   REVOLUT_REDIRECT_URI: z.string().optional(),
+  GOCARDLESS_SECRET_ID: z.string().optional(),
+  GOCARDLESS_SECRET_KEY: z.string().optional(),
+  GOCARDLESS_REDIRECT_URI: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
