@@ -29,6 +29,8 @@ export enum SyncStatus {
 export enum ConnectorType {
   FINTS = 'FINTS',
   PAYPAL = 'PAYPAL',
+  WISE = 'WISE',
+  REVOLUT = 'REVOLUT',
 }
 
 export enum TanMethod {

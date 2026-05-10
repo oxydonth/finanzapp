@@ -1,14 +1,17 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import { api } from '../../lib/api';
 import {
   LayoutDashboard, CreditCard, ArrowLeftRight,
   Tag, Target, BarChart2, Building2, Settings, LogOut,
   Sparkles, Wallet, ShoppingBag, Bookmark, Gift, TrendingUp, Landmark, SlidersHorizontal, Heart,
+  MailWarning, X,
 } from 'lucide-react';
 import { LogoMark } from '../../components/ui/Logo';
 import type { LucideIcon } from 'lucide-react';
@@ -20,6 +23,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const theme = useThemeStore((s) => s.theme);
   const localeSynced = useRef(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const resendMutation = useMutation({
+    mutationFn: () => api.post('/auth/resend-verification', {}),
+  });
 
   // Sync user's locale from DB on first load — overrides browser/OS detection
   useEffect(() => {
@@ -107,7 +115,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto flex flex-col">
+        {!user.isEmailVerified && !bannerDismissed && (
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-amber-50 border-b border-amber-200/60 text-amber-800 text-sm shrink-0">
+            <MailWarning size={15} className="shrink-0 text-amber-500" />
+            <span className="flex-1">
+              {t('auth.emailNotVerified')}{' '}
+              <button
+                onClick={() => resendMutation.mutate()}
+                disabled={resendMutation.isPending || resendMutation.isSuccess}
+                className="font-semibold underline hover:no-underline disabled:opacity-60"
+              >
+                {resendMutation.isSuccess ? t('auth.emailSent') : t('auth.resendVerification')}
+              </button>
+            </span>
+            <button onClick={() => setBannerDismissed(true)} className="text-amber-400 hover:text-amber-600 shrink-0">
+              <X size={14} />
+            </button>
+          </div>
+        )}
         {children}
       </main>
     </div>

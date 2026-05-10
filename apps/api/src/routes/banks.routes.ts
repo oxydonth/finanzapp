@@ -4,6 +4,8 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/database';
 import * as fintsService from '../services/fints.service';
 import * as paypalService from '../services/paypal.service';
+import * as wiseService from '../services/wise.service';
+import * as revolutService from '../services/revolut.service';
 import { getAllBanks, searchBanks, findBankByBlz } from '@finanzapp/config';
 import { ConnectorType } from '@finanzapp/types';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
@@ -44,6 +46,50 @@ router.get('/paypal/callback', async (req, res, next) => {
     const msg = e instanceof Error ? encodeURIComponent(e.message) : 'unknown_error';
     res.redirect(`${frontendBase}/banks/connect?paypal=error&msg=${msg}`);
     next; // keep TS happy, but we've already responded
+  }
+});
+
+// ── Wise OAuth ────────────────────────────────────────────────────────────────
+
+router.get('/wise/auth-url', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const authUrl = wiseService.getAuthUrl(req.userId!);
+    res.json({ data: { authUrl, configured: true } });
+  } catch (e) { next(e); }
+});
+
+router.get('/wise/callback', async (req, res, next) => {
+  const frontendBase = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
+  try {
+    const { code, state } = z.object({ code: z.string(), state: z.string() }).parse(req.query);
+    await wiseService.handleCallback(code, state);
+    res.redirect(`${frontendBase}/banks/connect?wise=connected`);
+  } catch (e) {
+    const msg = e instanceof Error ? encodeURIComponent(e.message) : 'unknown_error';
+    res.redirect(`${frontendBase}/banks/connect?wise=error&msg=${msg}`);
+    next;
+  }
+});
+
+// ── Revolut OAuth ─────────────────────────────────────────────────────────────
+
+router.get('/revolut/auth-url', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const authUrl = revolutService.getAuthUrl(req.userId!);
+    res.json({ data: { authUrl, configured: true } });
+  } catch (e) { next(e); }
+});
+
+router.get('/revolut/callback', async (req, res, next) => {
+  const frontendBase = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
+  try {
+    const { code, state } = z.object({ code: z.string(), state: z.string() }).parse(req.query);
+    await revolutService.handleCallback(code, state);
+    res.redirect(`${frontendBase}/banks/connect?revolut=connected`);
+  } catch (e) {
+    const msg = e instanceof Error ? encodeURIComponent(e.message) : 'unknown_error';
+    res.redirect(`${frontendBase}/banks/connect?revolut=error&msg=${msg}`);
+    next;
   }
 });
 
@@ -115,6 +161,10 @@ router.post('/connections/:id/sync', authenticate, async (req: AuthRequest, res,
 
     if (conn.connectorType === ConnectorType.PAYPAL) {
       paypalService.syncTransactions(req.params.id).catch(console.error);
+    } else if (conn.connectorType === ConnectorType.WISE) {
+      wiseService.syncTransactions(req.params.id).catch(console.error);
+    } else if (conn.connectorType === ConnectorType.REVOLUT) {
+      revolutService.syncTransactions(req.params.id).catch(console.error);
     } else {
       fintsService.syncTransactions(req.params.id).catch(console.error);
     }

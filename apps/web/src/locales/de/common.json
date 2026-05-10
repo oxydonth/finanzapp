@@ -51,7 +51,12 @@
     "passwordMin8": "Passwort (min. 8 Zeichen)",
     "creatingAccount": "Konto wird erstellt...",
     "alreadyRegistered": "Bereits registriert?",
-    "registrationFailed": "Registrierung fehlgeschlagen"
+    "registrationFailed": "Registrierung fehlgeschlagen",
+    "emailNotVerified": "Bitte bestätige deine E-Mail-Adresse, um alle Funktionen zu nutzen.",
+    "resendVerification": "Bestätigungs-E-Mail erneut senden",
+    "emailSent": "E-Mail gesendet!",
+    "emailVerified": "E-Mail bestätigt! Du kannst dich jetzt anmelden.",
+    "emailVerifyFailed": "Der Bestätigungslink ist ungültig oder abgelaufen. Bitte fordere einen neuen an."
   },
   "settings": {
     "title": "Einstellungen",
@@ -265,6 +270,10 @@
     "paypalDesc": "PayPal-Transaktionen automatisch importieren",
     "paypalNote": "Du wirst zu PayPal weitergeleitet, um den Lesezugriff auf deine Transaktionshistorie sicher zu autorisieren.",
     "paypalButton": "Mit PayPal verbinden",
-    "paypalConnecting": "Weiterleitung zu PayPal..."
+    "paypalConnecting": "Weiterleitung zu PayPal...",
+    "wiseDesc": "Wise-Mehrwährungskonto-Transaktionen importieren",
+    "revolutDesc": "Revolut-Kontotransaktionen importieren",
+    "oauthNote": "Du wirst weitergeleitet, um den Lesezugriff auf dein Konto zu autorisieren. Es werden keine Zahlungsberechtigungen angefordert.",
+    "oauthButton": "Mit {{provider}} verbinden"
   }
 }

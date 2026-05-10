@@ -1,7 +1,9 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { prisma } from '../config/database';
 import { signAccessToken, signRefreshToken, signMfaToken, verifyRefreshToken } from '../utils/jwt';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../utils/errors';
+import { sendVerificationEmail } from './mail.service';
 
 export async function register(
   email: string,
@@ -13,8 +15,9 @@ export async function register(
   if (existing) throw new ConflictError('Email already registered');
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const emailVerifyToken = crypto.randomBytes(32).toString('hex');
   const user = await prisma.user.create({
-    data: { email, passwordHash, firstName, lastName },
+    data: { email, passwordHash, firstName, lastName, emailVerifyToken },
     select: { id: true, email: true, firstName: true, lastName: true, currency: true, locale: true, isEmailVerified: true, mfaEnabled: true, createdAt: true, updatedAt: true },
   });
 
@@ -24,6 +27,9 @@ export async function register(
     where: { id: user.id },
     data: { refreshTokenHash: await bcrypt.hash(refreshToken, 12) },
   });
+
+  // Non-blocking — email failure must not fail registration
+  sendVerificationEmail(email, firstName, emailVerifyToken).catch(console.error);
 
   return { user, accessToken, refreshToken };
 }
@@ -94,6 +100,24 @@ export async function logout(userId: string) {
     where: { id: userId },
     data: { refreshTokenHash: null },
   });
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  const user = await prisma.user.findFirst({ where: { emailVerifyToken: token } });
+  if (!user) throw new NotFoundError('Verification token');
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { isEmailVerified: true, emailVerifyToken: null },
+  });
+}
+
+export async function resendVerification(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new NotFoundError('User');
+  if (user.isEmailVerified) return; // already verified, silently succeed
+  const emailVerifyToken = crypto.randomBytes(32).toString('hex');
+  await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken } });
+  sendVerificationEmail(user.email, user.firstName, emailVerifyToken).catch(console.error);
 }
 
 export async function getProfile(userId: string) {

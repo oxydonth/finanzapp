@@ -7,9 +7,10 @@ import { api } from '../../../../lib/api';
 import type { BankRegistryEntry } from '@finanzapp/config';
 import { Search, ChevronRight, Lock, CheckCircle, Building2, Wallet } from 'lucide-react';
 
-type Step = 'provider' | 'select' | 'credentials' | 'tan' | 'paypal' | 'done';
+type Step = 'provider' | 'select' | 'credentials' | 'tan' | 'oauth' | 'done';
+type OAuthProvider = 'paypal' | 'wise' | 'revolut';
 const FINTS_STEPS: Step[] = ['provider', 'select', 'credentials', 'tan', 'done'];
-const PAYPAL_STEPS: Step[] = ['provider', 'paypal', 'done'];
+const OAUTH_STEPS: Step[] = ['provider', 'oauth', 'done'];
 
 export default function VerbindenPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function VerbindenPage() {
   const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>('provider');
-  const [provider, setProvider] = useState<'fints' | 'paypal' | null>(null);
+  const [provider, setProvider] = useState<'fints' | OAuthProvider | null>(null);
   const [bankSearch, setBankSearch] = useState('');
   const [selectedBank, setSelectedBank] = useState<BankRegistryEntry | null>(null);
   const [creds, setCreds] = useState({ loginName: '', pin: '' });
@@ -26,15 +27,12 @@ export default function VerbindenPage() {
   const [tanChallenge, setTanChallenge] = useState('');
   const [error, setError] = useState('');
 
-  // Detect return from PayPal OAuth redirect
+  // Detect return from OAuth redirect (PayPal / Wise / Revolut)
   useEffect(() => {
-    const paypalParam = params.get('paypal');
-    if (paypalParam === 'connected') {
-      setProvider('paypal');
-      setStep('done');
-    } else if (paypalParam === 'error') {
-      setProvider('paypal');
-      setError(params.get('msg') ?? t('connectBank.connectionFailed'));
+    for (const p of ['paypal', 'wise', 'revolut'] as OAuthProvider[]) {
+      const val = params.get(p);
+      if (val === 'connected') { setProvider(p); setStep('done'); return; }
+      if (val === 'error') { setProvider(p); setError(params.get('msg') ?? t('connectBank.connectionFailed')); return; }
     }
   }, [params, t]);
 
@@ -76,19 +74,19 @@ export default function VerbindenPage() {
     onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.tanFailed')),
   });
 
-  const paypalAuthMutation = useMutation({
-    mutationFn: () => api.get<{ authUrl: string }>('/banks/paypal/auth-url'),
+  const oauthMutation = useMutation({
+    mutationFn: (p: OAuthProvider) => api.get<{ authUrl: string }>(`/banks/${p}/auth-url`),
     onSuccess: (res) => { window.location.href = res.authUrl; },
     onError: (err) => setError(err instanceof Error ? err.message : t('connectBank.connectionFailed')),
   });
 
-  const steps = provider === 'paypal' ? PAYPAL_STEPS : FINTS_STEPS;
+  const steps = provider === 'fints' || provider === null ? FINTS_STEPS : OAUTH_STEPS;
   const currentStepIndex = steps.indexOf(step);
 
-  function chooseProvider(p: 'fints' | 'paypal') {
+  function chooseProvider(p: 'fints' | OAuthProvider) {
     setProvider(p);
     setError('');
-    setStep(p === 'paypal' ? 'paypal' : 'select');
+    setStep(p === 'fints' ? 'select' : 'oauth');
   }
 
   return (
@@ -141,19 +139,28 @@ export default function VerbindenPage() {
             <ChevronRight size={16} className="text-slate-300 group-hover:text-brand-400 transition-colors" />
           </button>
 
-          <button
-            onClick={() => chooseProvider('paypal')}
-            className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
-          >
-            <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-              <Wallet size={20} className="text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">PayPal</p>
-              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.paypalDesc')}</p>
-            </div>
-            <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-400 transition-colors" />
-          </button>
+          {(
+            [
+              { key: 'paypal', label: 'PayPal', desc: t('connectBank.paypalDesc'), color: 'blue' },
+              { key: 'wise', label: 'Wise', desc: t('connectBank.wiseDesc'), color: 'emerald' },
+              { key: 'revolut', label: 'Revolut', desc: t('connectBank.revolutDesc'), color: 'violet' },
+            ] as { key: OAuthProvider; label: string; desc: string; color: string }[]
+          ).map(({ key, label, desc, color }) => (
+            <button
+              key={key}
+              onClick={() => chooseProvider(key)}
+              className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
+            >
+              <div className={`w-11 h-11 rounded-xl bg-${color}-50 flex items-center justify-center shrink-0 group-hover:bg-${color}-100 transition-colors`}>
+                <Wallet size={20} className={`text-${color}-600`} />
+              </div>
+              <div className="flex-1">
+                <p className={`font-semibold text-slate-900 group-hover:text-${color}-600 transition-colors`}>{label}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+              </div>
+              <ChevronRight size={16} className={`text-slate-300 group-hover:text-${color}-400 transition-colors`} />
+            </button>
+          ))}
         </div>
       )}
 
@@ -253,29 +260,29 @@ export default function VerbindenPage() {
         </div>
       )}
 
-      {/* Step: PayPal OAuth */}
-      {step === 'paypal' && (
+      {/* Step: OAuth (PayPal / Wise / Revolut) */}
+      {step === 'oauth' && provider && provider !== 'fints' && (
         <div className="space-y-5">
           <div className="flex items-center gap-4 p-5 card">
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
               <Wallet size={22} className="text-blue-600" />
             </div>
             <div>
-              <p className="font-semibold text-slate-900">PayPal</p>
-              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.paypalDesc')}</p>
+              <p className="font-semibold text-slate-900 capitalize">{provider}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t(`connectBank.${provider}Desc`)}</p>
             </div>
           </div>
-          <p className="text-sm text-slate-600 leading-relaxed">{t('connectBank.paypalNote')}</p>
+          <p className="text-sm text-slate-600 leading-relaxed">{t('connectBank.oauthNote')}</p>
           <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 rounded-xl p-3.5 ring-1 ring-slate-200/60">
             <Lock size={13} className="text-slate-400 shrink-0 mt-0.5" />
             {t('connectBank.securityNote')}
           </div>
           <button
-            onClick={() => paypalAuthMutation.mutate()}
-            disabled={paypalAuthMutation.isPending}
+            onClick={() => oauthMutation.mutate(provider)}
+            disabled={oauthMutation.isPending}
             className="btn-primary w-full py-2.5"
           >
-            {paypalAuthMutation.isPending ? t('connectBank.paypalConnecting') : t('connectBank.paypalButton')}
+            {oauthMutation.isPending ? t('connectBank.paypalConnecting') : t('connectBank.oauthButton', { provider: provider.charAt(0).toUpperCase() + provider.slice(1) })}
           </button>
         </div>
       )}

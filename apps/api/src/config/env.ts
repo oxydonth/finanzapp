@@ -22,6 +22,12 @@ const envSchema = z.object({
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   PAYPAL_REDIRECT_URI: z.string().optional(),
+  WISE_CLIENT_ID: z.string().optional(),
+  WISE_CLIENT_SECRET: z.string().optional(),
+  WISE_REDIRECT_URI: z.string().optional(),
+  REVOLUT_CLIENT_ID: z.string().optional(),
+  REVOLUT_CLIENT_SECRET: z.string().optional(),
+  REVOLUT_REDIRECT_URI: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

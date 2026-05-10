@@ -30,6 +30,8 @@ enum BudgetPeriod {
 enum ConnectorType {
   FINTS
   PAYPAL
+  WISE
+  REVOLUT
 }
 
 enum SyncStatus {

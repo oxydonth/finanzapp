@@ -51,6 +51,24 @@ router.post('/logout', authenticate, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/verify-email', async (req, res, next) => {
+  const frontendBase = (process.env.CORS_ORIGINS ?? 'http://localhost:3001').split(',')[0];
+  try {
+    const { token } = z.object({ token: z.string().min(1) }).parse(req.query);
+    await authService.verifyEmail(token);
+    res.redirect(`${frontendBase}/login?verified=true`);
+  } catch {
+    res.redirect(`${frontendBase}/login?verified=error`);
+  }
+});
+
+router.post('/resend-verification', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    await authService.resendVerification(req.userId!);
+    res.json({ data: { message: 'Verification email sent' } });
+  } catch (e) { next(e); }
+});
+
 router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
   try {
     const user = await authService.getProfile(req.userId!);

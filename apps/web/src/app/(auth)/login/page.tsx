@@ -1,16 +1,17 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
 import type { LoginResponse, MfaChallengeResponse } from '@finanzapp/types';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { Logo } from '../../../components/ui/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
@@ -20,6 +21,13 @@ export default function LoginPage() {
   const [step, setStep] = useState<'credentials' | 'mfa'>('credentials');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verifiedBanner, setVerifiedBanner] = useState<'success' | 'error' | null>(null);
+
+  useEffect(() => {
+    const v = searchParams.get('verified');
+    if (v === 'true') setVerifiedBanner('success');
+    else if (v === 'error') setVerifiedBanner('error');
+  }, [searchParams]);
 
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault();
@@ -84,6 +92,18 @@ export default function LoginPage() {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">{t('auth.welcomeBack')}</h1>
               <p className="text-slate-500 dark:text-slate-400 mb-8 text-sm">{t('auth.signInSubtitle')}</p>
 
+              {verifiedBanner === 'success' && (
+                <div className="flex items-center gap-2.5 bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-emerald-200/60">
+                  <CheckCircle size={14} className="shrink-0" />
+                  {t('auth.emailVerified')}
+                </div>
+              )}
+              {verifiedBanner === 'error' && (
+                <div className="flex items-center gap-2.5 bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">
+                  <AlertCircle size={14} className="shrink-0" />
+                  {t('auth.emailVerifyFailed')}
+                </div>
+              )}
               {error && (
                 <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">
                   {error}
