@@ -190,7 +190,7 @@ export default function VerbindenPage() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">{t('connectBank.successTitle')}</h2>
           <p className="text-slate-500 text-sm mb-7">{t('connectBank.successDesc')}</p>
-          <button onClick={() => router.push('/banken')} className="btn-primary px-8 py-2.5">
+          <button onClick={() => router.push('/banks')} className="btn-primary px-8 py-2.5">
             {t('connectBank.goToBanks')}
           </button>
         </div>

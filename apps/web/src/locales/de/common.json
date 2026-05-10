@@ -98,7 +98,14 @@
     "passwordPlaceholder": "Dein Passwort",
     "deleteConfirmBtn": "Konto endgültig löschen",
     "deleteConfirmBtnLoading": "Löschen…",
-    "deleteError": "Fehler beim Löschen"
+    "deleteError": "Fehler beim Löschen",
+    "theme": "Design",
+    "themeLight": "Hell",
+    "themeLightDesc": "Standard helles Design",
+    "themeDark": "Dunkel",
+    "themeDarkDesc": "Schont die Augen",
+    "themeGirly": "Girly",
+    "themeGirlyDesc": "Rosa & hübsch"
   },
   "transactions": {
     "title": "Transaktionen",

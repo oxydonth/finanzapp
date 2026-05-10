@@ -60,7 +60,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
-      <div className="hidden lg:flex w-[420px] bg-slate-950 flex-col p-10 shrink-0">
+      <div className="hidden lg:flex w-[420px] bg-slate-950 girly:bg-pink-400 flex-col p-10 shrink-0">
         <Link href="/" className="mb-auto">
           <Logo markSize={30} textClass="text-[15px] text-white" dark />
         </Link>
@@ -73,7 +73,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center bg-slate-50 p-6">
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950 girly:bg-pink-50 p-6">
         <div className="w-full max-w-sm">
           {step === 'credentials' ? (
             <div className="animate-fade-in">
@@ -81,8 +81,8 @@ export default function LoginPage() {
                 <Logo markSize={26} textClass="text-[14px]" />
               </div>
 
-              <h1 className="text-2xl font-bold text-slate-900 mb-1 tracking-tight">{t('auth.welcomeBack')}</h1>
-              <p className="text-slate-500 mb-8 text-sm">{t('auth.signInSubtitle')}</p>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">{t('auth.welcomeBack')}</h1>
+              <p className="text-slate-500 dark:text-slate-400 mb-8 text-sm">{t('auth.signInSubtitle')}</p>
 
               {error && (
                 <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <p className="text-center text-sm text-slate-500 mt-6">
+              <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
                 {t('auth.noAccount')}{' '}
                 <Link href="/register" className="text-brand-600 font-medium hover:text-brand-700">{t('auth.register')}</Link>
               </p>
@@ -127,13 +127,13 @@ export default function LoginPage() {
             <div className="animate-fade-in">
               <button
                 onClick={() => { setStep('credentials'); setError(''); setCode(''); }}
-                className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+                className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-6 transition-colors"
               >
                 <ArrowLeft size={14} /> {t('auth.backToLogin')}
               </button>
 
-              <h1 className="text-2xl font-bold text-slate-900 mb-1 tracking-tight">{t('auth.twoFactor')}</h1>
-              <p className="text-slate-500 mb-8 text-sm">{t('auth.twoFactorSubtitle')}</p>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1 tracking-tight">{t('auth.twoFactor')}</h1>
+              <p className="text-slate-500 dark:text-slate-400 mb-8 text-sm">{t('auth.twoFactorSubtitle')}</p>
 
               {error && (
                 <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-5 text-sm ring-1 ring-rose-200/60">

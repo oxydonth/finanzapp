@@ -58,7 +58,7 @@ export default function KontenPage() {
             <Building2 className="w-7 h-7 text-slate-400" />
           </div>
           <p className="text-slate-500 font-medium mb-1">{t('accounts.noAccounts')}</p>
-          <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
+          <Link href="/banks/connect" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
             {t('accounts.connectBank')}
           </Link>
         </div>

@@ -98,7 +98,14 @@
     "passwordPlaceholder": "Your password",
     "deleteConfirmBtn": "Delete account permanently",
     "deleteConfirmBtnLoading": "Deleting…",
-    "deleteError": "Error deleting account"
+    "deleteError": "Error deleting account",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeLightDesc": "Default bright look",
+    "themeDark": "Dark",
+    "themeDarkDesc": "Easy on the eyes",
+    "themeGirly": "Girly",
+    "themeGirlyDesc": "Pink & pretty"
   },
   "transactions": {
     "title": "Transactions",

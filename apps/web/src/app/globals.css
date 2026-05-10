@@ -9,6 +9,8 @@
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+    @apply dark:bg-slate-950 dark:text-slate-100;
+    @apply girly:bg-pink-50 girly:text-slate-900;
     font-feature-settings: 'cv11', 'ss01';
   }
 
@@ -20,32 +22,42 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full;
+    @apply bg-slate-200 rounded-full dark:bg-slate-700 girly:bg-pink-300;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-300;
+    @apply bg-slate-300 dark:bg-slate-600 girly:bg-pink-400;
   }
 }
 
 @layer components {
   .card {
     @apply bg-white rounded-2xl shadow-card ring-1 ring-slate-900/[0.05];
+    @apply dark:bg-slate-900 dark:ring-white/[0.06];
+    @apply girly:bg-white girly:ring-pink-300/50 girly:shadow-none;
+    border: 0;
   }
 
   .card-hover {
     @apply card transition-shadow duration-200 hover:shadow-card-hover;
+    @apply girly:hover:shadow-[0_4px_20px_0_rgb(244_114_182/0.2)];
   }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 bg-brand-600 text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-brand-700 active:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 select-none;
+    @apply dark:bg-brand-500 dark:hover:bg-brand-400 dark:active:bg-brand-300;
+    @apply girly:bg-pink-400 girly:hover:bg-pink-500 girly:active:bg-pink-600 girly:rounded-full girly:font-semibold girly:tracking-wide;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 bg-white text-slate-700 text-sm font-medium px-4 py-2.5 rounded-xl ring-1 ring-slate-200 hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 select-none;
+    @apply dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-700 dark:active:bg-slate-600;
+    @apply girly:text-pink-600 girly:ring-pink-300 girly:hover:bg-pink-50 girly:active:bg-pink-100 girly:rounded-full;
   }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 text-slate-500 text-sm font-medium px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 transition-all duration-150 select-none;
+    @apply dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100;
+    @apply girly:text-pink-500 girly:hover:bg-pink-100 girly:hover:text-pink-700;
   }
 
   .btn-danger {
@@ -54,18 +66,26 @@
 
   .input {
     @apply w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all duration-150 shadow-inner-sm;
+    @apply dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-brand-400/50 dark:focus:border-brand-400;
+    @apply girly:border-pink-300 girly:bg-pink-50/50 girly:placeholder:text-pink-300 girly:focus:ring-pink-400/60 girly:focus:border-pink-400 girly:rounded-2xl;
   }
 
   .label {
     @apply block text-sm font-medium text-slate-700 mb-1.5;
+    @apply dark:text-slate-300;
+    @apply girly:text-pink-600 girly:font-semibold;
   }
 
   .page-title {
     @apply text-xl font-semibold text-slate-900 tracking-tight;
+    @apply dark:text-slate-100;
+    @apply girly:text-pink-600 girly:font-bold;
   }
 
   .section-title {
     @apply text-sm font-semibold text-slate-900;
+    @apply dark:text-slate-100;
+    @apply girly:text-pink-600;
   }
 
   .badge {
@@ -74,25 +94,35 @@
 
   .badge-green {
     @apply badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60;
+    @apply dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-700/40;
+    @apply girly:bg-pink-100 girly:text-pink-700 girly:ring-pink-300/60;
   }
 
   .badge-red {
     @apply badge bg-rose-50 text-rose-700 ring-1 ring-rose-200/60;
+    @apply dark:bg-rose-900/30 dark:text-rose-400 dark:ring-rose-700/40;
   }
 
   .badge-amber {
     @apply badge bg-amber-50 text-amber-700 ring-1 ring-amber-200/60;
+    @apply dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-700/40;
   }
 
   .badge-blue {
     @apply badge bg-blue-50 text-blue-700 ring-1 ring-blue-200/60;
+    @apply dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-700/40;
+    @apply girly:bg-pink-50 girly:text-pink-700 girly:ring-pink-200/60;
   }
 
   .badge-gray {
     @apply badge bg-slate-100 text-slate-600 ring-1 ring-slate-200/60;
+    @apply dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700/40;
+    @apply girly:bg-pink-50 girly:text-pink-500 girly:ring-pink-200/60;
   }
 
   .badge-violet {
     @apply badge bg-violet-50 text-violet-700 ring-1 ring-violet-200/60;
+    @apply dark:bg-violet-900/30 dark:text-violet-400 dark:ring-violet-700/40;
+    @apply girly:bg-pink-50 girly:text-pink-700 girly:ring-pink-200/60;
   }
 }

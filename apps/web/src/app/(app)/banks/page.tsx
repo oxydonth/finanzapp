@@ -37,7 +37,7 @@ export default function BankenPage() {
     <div className="p-8 max-w-4xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-7">
         <h1 className="page-title">{t('banks.title')}</h1>
-        <Link href="/banken/verbinden" className="btn-primary">
+        <Link href="/banks/connect" className="btn-primary">
           <Plus size={16} /> {t('banks.connectBank')}
         </Link>
       </div>
@@ -52,7 +52,7 @@ export default function BankenPage() {
             <Building2 className="w-7 h-7 text-slate-400" />
           </div>
           <p className="text-slate-900 font-semibold mb-1">{t('banks.noBanks')}</p>
-          <Link href="/banken/verbinden" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
+          <Link href="/banks/connect" className="text-brand-600 hover:text-brand-700 text-sm font-medium transition-colors">
             {t('banks.connectBankNow')}
           </Link>
         </div>

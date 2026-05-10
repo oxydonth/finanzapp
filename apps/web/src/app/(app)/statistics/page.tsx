@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
+import { useThemeStore } from '../../../store/themeStore';
 
 type CashFlowEntry = { month: string; income: number; expenses: number; savings: number };
 type BreakdownEntry = { id: string; name: string; icon?: string | null; color?: string | null; total: number };
@@ -24,13 +25,6 @@ function rangeParams(months: number): string {
   return `?from=${from.toISOString()}&to=${to.toISOString()}`;
 }
 
-const TOOLTIP_STYLE = {
-  borderRadius: '12px',
-  border: 'none',
-  boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)',
-  fontSize: '12px',
-  padding: '8px 12px',
-};
 
 export default function StatistikenPage() {
   const router = useRouter();
@@ -38,6 +32,11 @@ export default function StatistikenPage() {
   const { t } = useTranslation();
   const [rangeMonths, setRangeMonths] = useState(6);
   const [toast, setToast] = useState<string | null>(null);
+  const theme = useThemeStore((s) => s.theme);
+
+  const TOOLTIP_STYLE = theme === 'dark'
+    ? { borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.4)', fontSize: '12px', padding: '8px 12px', background: '#1e293b', color: '#e2e8f0' }
+    : { borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)', fontSize: '12px', padding: '8px 12px' };
 
   const RANGES = [
     { label: t('statistics.thisMonth'), months: 1 },
@@ -112,15 +111,15 @@ export default function StatistikenPage() {
       <div className="flex items-center justify-between mb-7">
         <h1 className="page-title">{t('statistics.title')}</h1>
         <div className="flex items-center gap-3">
-          <div className="flex rounded-xl ring-1 ring-slate-200 overflow-hidden text-sm bg-white">
+          <div className="flex rounded-xl ring-1 ring-slate-200 dark:ring-slate-700 overflow-hidden text-sm bg-white dark:bg-slate-800">
             {RANGES.map((r) => (
               <button
                 key={r.months}
                 onClick={() => setRangeMonths(r.months)}
                 className={`px-3.5 py-2 text-xs font-medium transition-colors ${
                   rangeMonths === r.months
-                    ? 'bg-brand-600 text-white'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-brand-600 text-white dark:bg-brand-500'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100'
                 }`}
               >
                 {r.label}
@@ -149,7 +148,7 @@ export default function StatistikenPage() {
       {uncategorized && (
         <div className="mb-6 flex items-center justify-between px-4 py-3 rounded-xl bg-amber-50 ring-1 ring-amber-200/60 text-sm text-amber-800">
           <span>{t('statistics.uncategorized_amount', { amount: formatEUR(uncategorized.total) })}</span>
-          <Link href="/kategorien" className="font-semibold hover:text-amber-900 transition-colors">
+          <Link href="/categories" className="font-semibold hover:text-amber-900 transition-colors">
             {t('statistics.createRules')} →
           </Link>
         </div>
@@ -165,7 +164,7 @@ export default function StatistikenPage() {
         ].map((c) => (
           <div key={c.label} className="card p-5">
             <div className="flex items-start justify-between mb-3">
-              <p className="text-xs text-slate-500">{c.label}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{c.label}</p>
               <div className={`w-8 h-8 rounded-lg ${c.bg} flex items-center justify-center`}>
                 <c.icon size={15} className={c.iconColor} />
               </div>
@@ -204,7 +203,7 @@ export default function StatistikenPage() {
                 outerRadius={80}
                 innerRadius={40}
                 onClick={(_, i) => {
-                  if (pieData[i]) router.push(`/transaktionen?categoryId=${pieData[i].id}`);
+                  if (pieData[i]) router.push(`/transactions?categoryId=${pieData[i].id}`);
                 }}
                 style={{ cursor: 'pointer' }}
               >
@@ -243,7 +242,7 @@ export default function StatistikenPage() {
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-400 mb-5">{t('statistics.estimatedTrend')}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-5">{t('statistics.estimatedTrend')}</p>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={wealthTrend}>
             <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
@@ -262,14 +261,14 @@ export default function StatistikenPage() {
             const max = breakdown.filter((d) => d.id !== 'other')[0]?.total ?? 1;
             const pct = Math.round((cat.total / max) * 100);
             return (
-              <Link key={cat.id} href={`/transaktionen?categoryId=${cat.id}`} className="flex items-center gap-3 group">
+              <Link key={cat.id} href={`/transactions?categoryId=${cat.id}`} className="flex items-center gap-3 group">
                 <span className="w-6 text-center text-base shrink-0">{cat.icon}</span>
                 <div className="flex-1">
                   <div className="flex justify-between text-sm mb-1.5">
-                    <span className="text-slate-700 group-hover:text-brand-600 transition-colors font-medium">{cat.name}</span>
-                    <span className="font-semibold text-slate-900 tabular-nums">{formatEUR(cat.total)}</span>
+                    <span className="text-slate-700 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors font-medium">{cat.name}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums">{formatEUR(cat.total)}</span>
                   </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-300"
                       style={{ width: `${pct}%`, backgroundColor: cat.color ?? '#6366f1' }}

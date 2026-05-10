@@ -79,7 +79,14 @@
     "disabling": "Disattivazione...",
     "disable": "Disattiva",
     "language": "Lingua",
-    "invalidCode": "Codice non valido"
+    "invalidCode": "Codice non valido",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeLightDesc": "Default bright look",
+    "themeDark": "Dark",
+    "themeDarkDesc": "Easy on the eyes",
+    "themeGirly": "Girly",
+    "themeGirlyDesc": "Pink & pretty"
   },
   "transactions": {
     "title": "Transazioni",

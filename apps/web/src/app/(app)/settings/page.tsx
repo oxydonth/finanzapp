@@ -6,8 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../lib/api';
 import { useAuthStore, getAccessToken, getRefreshToken } from '../../../store/authStore';
 import type { User, MfaSetupResponse, MfaEnableResponse } from '@finanzapp/types';
-import { Shield, ShieldCheck, ShieldOff, Copy, Check, Globe, Download, Trash2 } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, Copy, Check, Globe, Download, Trash2, Palette } from 'lucide-react';
 import Link from 'next/link';
+import { useThemeStore, type Theme } from '../../../store/themeStore';
 
 type MfaStep = 'idle' | 'setup' | 'backup-codes';
 
@@ -56,6 +57,14 @@ export default function EinstellungenPage() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const storeUser = useAuthStore((s) => s.user);
   const { t, i18n } = useTranslation();
+
+  const { theme, setTheme } = useThemeStore();
+
+  const THEMES: { value: Theme; label: string; desc: string }[] = [
+    { value: 'light', label: t('settings.themeLight'), desc: t('settings.themeLightDesc') },
+    { value: 'dark',  label: t('settings.themeDark'),  desc: t('settings.themeDarkDesc') },
+    { value: 'girly', label: t('settings.themeGirly'), desc: t('settings.themeGirlyDesc') },
+  ];
 
   const { data: user } = useQuery<User>({
     queryKey: ['me'],
@@ -118,29 +127,29 @@ export default function EinstellungenPage() {
     <div className="p-8 max-w-2xl mx-auto animate-fade-in">
       <div className="mb-7">
         <h1 className="page-title">{t('settings.title')}</h1>
-        <p className="text-sm text-slate-500 mt-1">{t('settings.accountSecurity')}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('settings.accountSecurity')}</p>
       </div>
 
       {/* Profile info */}
       <section className="card p-6 mb-4">
         <h2 className="section-title mb-5">{t('settings.profile')}</h2>
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 girly:from-pink-300 girly:to-rose-300 flex items-center justify-center text-white font-bold text-lg shrink-0">
             {(user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '')}
           </div>
           <div>
-            <p className="font-semibold text-slate-900">{user?.firstName} {user?.lastName}</p>
-            <p className="text-sm text-slate-500">{user?.email}</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">{user?.firstName} {user?.lastName}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-slate-100">
+        <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-slate-100 dark:border-slate-800">
           <div>
-            <p className="text-xs text-slate-400 mb-0.5">{t('settings.name')}</p>
-            <p className="font-medium text-slate-900">{user?.firstName} {user?.lastName}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('settings.name')}</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">{user?.firstName} {user?.lastName}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400 mb-0.5">{t('settings.email')}</p>
-            <p className="font-medium text-slate-900">{user?.email}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('settings.email')}</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">{user?.email}</p>
           </div>
         </div>
       </section>
@@ -170,17 +179,43 @@ export default function EinstellungenPage() {
         </select>
       </section>
 
+      {/* Theme selector */}
+      <section className="card p-6 mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-brand-50 girly:bg-pink-100 dark:bg-slate-800 flex items-center justify-center">
+            <Palette size={16} className="text-brand-600 girly:text-pink-500 dark:text-brand-400" />
+          </div>
+          <h2 className="section-title">{t('settings.theme')}</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {THEMES.map(({ value, label, desc }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${
+                theme === value
+                  ? 'border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-950/30 girly:border-pink-400 girly:bg-pink-50'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600 girly:border-pink-200 girly:hover:border-pink-400'
+              }`}
+            >
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-0.5">{label}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{desc}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* DSGVO section */}
       <section className="card p-6 mb-4">
         <h2 className="section-title mb-1">{t('settings.privacyTitle')}</h2>
-        <p className="text-sm text-slate-500 mb-5">{t('settings.privacyDesc')}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{t('settings.privacyDesc')}</p>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <Download size={16} className="text-brand-600" />
+              <Download size={16} className="text-brand-600 dark:text-brand-400" />
               <div>
-                <p className="text-sm font-semibold text-slate-900">{t('settings.exportData')}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{t('settings.exportDataDesc')}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('settings.exportData')}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('settings.exportDataDesc')}</p>
               </div>
             </div>
             <a
@@ -209,18 +244,18 @@ export default function EinstellungenPage() {
             </a>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50/50 border border-rose-100">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
             <div className="flex items-center gap-3">
               <Trash2 size={16} className="text-rose-500" />
               <div>
-                <p className="text-sm font-semibold text-slate-900">{t('settings.deleteAccount')}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{t('settings.deleteAccountDesc')}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('settings.deleteAccount')}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('settings.deleteAccountDesc')}</p>
               </div>
             </div>
             <DeleteAccountButton />
           </div>
 
-          <p className="text-xs text-slate-400 pt-1">
+          <p className="text-xs text-slate-400 dark:text-slate-500 pt-1">
             {t('settings.privacyNote')}{' '}
             <Link href="/datenschutz" target="_blank" className="text-brand-600 hover:underline">{t('settings.privacyPolicy')}</Link>.
           </p>
@@ -239,7 +274,7 @@ export default function EinstellungenPage() {
           <h2 className="section-title">{t('settings.twoFactor')}</h2>
           {mfaEnabled && <span className="ml-auto badge-green">{t('settings.twoFactorActive')}</span>}
         </div>
-        <p className="text-sm text-slate-500 mb-6">{t('settings.twoFactorDesc')}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t('settings.twoFactorDesc')}</p>
 
         {error && (
           <div className="bg-rose-50 text-rose-700 px-4 py-3 rounded-xl mb-4 text-sm ring-1 ring-rose-200/60">{error}</div>
@@ -392,9 +427,9 @@ function DeleteAccountButton() {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm animate-fade-in">
-        <h3 className="text-lg font-bold text-slate-900 mb-1">{t('settings.deleteConfirmTitle')}</h3>
-        <p className="text-sm text-slate-500 mb-4">{t('settings.deleteConfirmDesc')}</p>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 w-full max-w-sm animate-fade-in ring-1 ring-slate-900/[0.05] dark:ring-white/[0.06]">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">{t('settings.deleteConfirmTitle')}</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t('settings.deleteConfirmDesc')}</p>
         {error && <div className="text-sm text-rose-600 bg-rose-50 rounded-lg px-3 py-2 mb-3">{error}</div>}
         <label className="label">{t('settings.passwordConfirm')}</label>
         <input

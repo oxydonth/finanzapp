@@ -79,7 +79,14 @@
     "disabling": "Uitschakelen...",
     "disable": "Uitschakelen",
     "language": "Taal",
-    "invalidCode": "Ongeldige code"
+    "invalidCode": "Ongeldige code",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeLightDesc": "Default bright look",
+    "themeDark": "Dark",
+    "themeDarkDesc": "Easy on the eyes",
+    "themeGirly": "Girly",
+    "themeGirlyDesc": "Pink & pretty"
   },
   "transactions": {
     "title": "Transacties",

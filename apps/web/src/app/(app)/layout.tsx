@@ -4,17 +4,21 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import {
   LayoutDashboard, CreditCard, ArrowLeftRight,
   Tag, Target, BarChart2, Building2, Settings, LogOut,
+  Sparkles, Wallet, ShoppingBag, Bookmark, Gift, TrendingUp, Landmark, SlidersHorizontal, Heart,
 } from 'lucide-react';
 import { LogoMark } from '../../components/ui/Logo';
+import type { LucideIcon } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
   const { t, i18n } = useTranslation();
+  const theme = useThemeStore((s) => s.theme);
   const localeSynced = useRef(false);
 
   // Sync user's locale from DB on first load — overrides browser/OS detection
@@ -27,15 +31,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     localeSynced.current = true;
   }, [user, i18n]);
 
-  const NAV = [
-    { href: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { href: '/konten', icon: CreditCard, label: t('nav.accounts') },
-    { href: '/transaktionen', icon: ArrowLeftRight, label: t('nav.transactions') },
-    { href: '/kategorien', icon: Tag, label: t('nav.categories') },
-    { href: '/budget', icon: Target, label: t('nav.budget') },
-    { href: '/statistiken', icon: BarChart2, label: t('nav.statistics') },
-    { href: '/banken', icon: Building2, label: t('nav.banks') },
-    { href: '/einstellungen', icon: Settings, label: t('nav.settings') },
+  const NAV: { href: string; icon: LucideIcon; girlyIcon: LucideIcon; label: string }[] = [
+    { href: '/dashboard',    icon: LayoutDashboard, girlyIcon: Sparkles,         label: t('nav.dashboard') },
+    { href: '/accounts',     icon: CreditCard,      girlyIcon: Wallet,           label: t('nav.accounts') },
+    { href: '/transactions', icon: ArrowLeftRight,  girlyIcon: ShoppingBag,      label: t('nav.transactions') },
+    { href: '/categories',   icon: Tag,             girlyIcon: Bookmark,         label: t('nav.categories') },
+    { href: '/budget',       icon: Target,          girlyIcon: Gift,             label: t('nav.budget') },
+    { href: '/statistics',   icon: BarChart2,       girlyIcon: TrendingUp,       label: t('nav.statistics') },
+    { href: '/banks',        icon: Building2,       girlyIcon: Landmark,         label: t('nav.banks') },
+    { href: '/settings',     icon: Settings,        girlyIcon: SlidersHorizontal, label: t('nav.settings') },
   ];
 
   useEffect(() => {
@@ -45,33 +49,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   const initials = `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase();
+  const isGirly = theme === 'girly';
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      <aside className="w-64 shrink-0 bg-slate-950 flex flex-col">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 girly:bg-pink-50">
+      <aside className="w-64 shrink-0 bg-slate-950 girly:bg-pink-400 flex flex-col">
         {/* Logo */}
-        <div className="px-4 py-5 border-b border-white/[0.06]">
+        <div className="px-4 py-5 border-b border-white/[0.06] girly:border-pink-300/40">
           <div className="flex items-center gap-2.5">
             <LogoMark size={28} />
-            <span className="text-[14px] font-semibold text-white tracking-tight">Finanzapp</span>
+            <span className="text-[14px] font-semibold text-white tracking-tight">
+              {isGirly ? '✿ Finanzapp' : 'Finanzapp'}
+            </span>
           </div>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
-          {NAV.map(({ href, icon: Icon, label }) => {
+          {NAV.map(({ href, icon: Icon, girlyIcon: GirlyIcon, label }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+            const NavIcon = isGirly ? GirlyIcon : Icon;
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150 ${
                   active
-                    ? 'bg-brand-500/20 text-brand-300 shadow-sm'
-                    : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-100'
+                    ? 'bg-brand-500/20 text-brand-300 shadow-sm girly:bg-white/30 girly:text-white'
+                    : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-100 girly:text-pink-100 girly:hover:bg-white/20 girly:hover:text-white'
                 }`}
               >
-                <Icon size={16} className={`shrink-0 ${active ? 'text-brand-400' : ''}`} />
+                <NavIcon size={16} className={`shrink-0 ${active ? 'text-brand-400 girly:text-white' : 'girly:text-pink-100'}`} />
                 {label}
               </Link>
             );
@@ -79,21 +87,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* User */}
-        <div className="px-2.5 py-3 border-t border-white/[0.06]">
+        <div className="px-2.5 py-3 border-t border-white/[0.06] girly:border-pink-300/40">
           <div className="flex items-center gap-3 px-3 py-2 mb-1">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 girly:from-pink-200 girly:to-rose-300 flex items-center justify-center text-xs font-bold text-white girly:text-pink-700 shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">{user.firstName} {user.lastName}</p>
-              <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+              <p className="text-xs font-medium text-slate-300 girly:text-white truncate">{user.firstName} {user.lastName}</p>
+              <p className="text-[11px] text-slate-500 girly:text-pink-100 truncate">{user.email}</p>
             </div>
           </div>
           <button
             onClick={() => { clearAuth(); router.push('/login'); }}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-white/[0.06] transition-all duration-150 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-slate-500 hover:text-rose-400 hover:bg-white/[0.06] girly:text-pink-100 girly:hover:text-white girly:hover:bg-white/20 transition-all duration-150 text-sm font-medium"
           >
-            <LogOut size={16} />
+            {isGirly ? <Heart size={16} /> : <LogOut size={16} />}
             {t('nav.logout')}
           </button>
         </div>

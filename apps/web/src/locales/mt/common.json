@@ -79,7 +79,14 @@
     "disabling": "Qed jiddiżattiva...",
     "disable": "Iddiżattiva",
     "language": "Lingwa",
-    "invalidCode": "Kodiċi mhux validu"
+    "invalidCode": "Kodiċi mhux validu",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeLightDesc": "Default bright look",
+    "themeDark": "Dark",
+    "themeDarkDesc": "Easy on the eyes",
+    "themeGirly": "Girly",
+    "themeGirlyDesc": "Pink & pretty"
   },
   "transactions": {
     "title": "Transazzjonijiet",

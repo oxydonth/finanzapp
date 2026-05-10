@@ -79,7 +79,14 @@
     "disabling": "Analluogi...",
     "disable": "Analluogi",
     "language": "Iaith",
-    "invalidCode": "Cod annilys"
+    "invalidCode": "Cod annilys",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeLightDesc": "Default bright look",
+    "themeDark": "Dark",
+    "themeDarkDesc": "Easy on the eyes",
+    "themeGirly": "Girly",
+    "themeGirlyDesc": "Pink & pretty"
   },
   "transactions": {
     "title": "Trafodion",

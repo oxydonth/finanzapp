@@ -12,7 +12,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de">
+    <html lang="de" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('finanzapp-theme');var d=s?JSON.parse(s):null;var t=d&&d.state&&d.state.theme;if(t==='dark')document.documentElement.classList.add('dark');else if(t==='girly')document.documentElement.classList.add('girly');}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>
