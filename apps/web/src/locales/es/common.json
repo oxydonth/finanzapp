@@ -190,6 +190,10 @@
     "successDesc": "Tus cuentas se están sincronizando ahora.",
     "goToBanks": "Ir a mis bancos",
     "connectionFailed": "Error de conexión",
-    "tanFailed": "TAN fallido"
+    "tanFailed": "TAN fallido",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking para más de 5.000 bancos en más de 50 países",
+    "saltedgeNote": "Serás redirigido al portal seguro de Salt Edge para conectar tu banco. Tus credenciales bancarias se introducen directamente allí y nunca se comparten con nosotros.",
+    "saltedgeSecurityNote": "Tus credenciales bancarias se introducen directamente en el portal seguro de Salt Edge. Nunca vemos tu usuario ni contraseña bancaria — solo un ID de conexión."
   }
 }

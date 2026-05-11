@@ -33,6 +33,7 @@ enum ConnectorType {
   WISE
   REVOLUT
   GOCARDLESS
+  SALTEDGE
 }
 
 enum SyncStatus {

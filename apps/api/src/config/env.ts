@@ -29,6 +29,8 @@ const envSchema = z.object({
   GOCARDLESS_SECRET_ID: z.string().optional(),
   GOCARDLESS_SECRET_KEY: z.string().optional(),
   GOCARDLESS_REDIRECT_URI: z.string().optional(),
+  SALTEDGE_APP_ID: z.string().optional(),
+  SALTEDGE_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

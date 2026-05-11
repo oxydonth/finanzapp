@@ -190,6 +190,10 @@
     "successDesc": "Uw rekeningen worden nu gesynchroniseerd.",
     "goToBanks": "Naar mijn banken",
     "connectionFailed": "Verbinding mislukt",
-    "tanFailed": "TAN mislukt"
+    "tanFailed": "TAN mislukt",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking voor meer dan 5.000 banken in 50+ landen",
+    "saltedgeNote": "Je wordt doorgestuurd naar het beveiligde Salt Edge-portaal om je bank te verbinden. Je bankgegevens worden daar direct ingevoerd en worden nooit met ons gedeeld.",
+    "saltedgeSecurityNote": "Je bankgegevens worden direct ingevoerd op het beveiligde Salt Edge-portaal. Wij zien nooit je banklogin of wachtwoord — alleen een verbindings-ID."
   }
 }

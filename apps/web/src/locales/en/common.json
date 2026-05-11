@@ -282,6 +282,10 @@
     "wiseDesc": "Import Wise multi-currency account transactions",
     "revolutDesc": "Import Revolut account transactions",
     "oauthNote": "You will be redirected to authorise read-only access to your account. No payment permissions are requested.",
-    "oauthButton": "Connect with {{provider}}"
+    "oauthButton": "Connect with {{provider}}",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking for 5,000+ banks in 50+ countries",
+    "saltedgeNote": "You will be redirected to the Salt Edge secure portal to connect your bank. Your bank credentials are entered directly there and are never shared with us.",
+    "saltedgeSecurityNote": "Your bank credentials are entered directly on Salt Edge's secure portal. We never see your bank login or password — only a connection ID."
   }
 }

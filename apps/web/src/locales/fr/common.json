@@ -190,6 +190,10 @@
     "successDesc": "Vos comptes sont en cours de synchronisation.",
     "goToBanks": "Aller à mes banques",
     "connectionFailed": "Connexion échouée",
-    "tanFailed": "TAN échoué"
+    "tanFailed": "TAN échoué",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking pour plus de 5 000 banques dans 50+ pays",
+    "saltedgeNote": "Vous serez redirigé vers le portail sécurisé Salt Edge pour connecter votre banque. Vos identifiants bancaires y sont saisis directement et ne nous sont jamais communiqués.",
+    "saltedgeSecurityNote": "Vos identifiants bancaires sont saisis directement sur le portail sécurisé Salt Edge. Nous ne voyons jamais votre identifiant ou mot de passe — uniquement un identifiant de connexion."
   }
 }

@@ -192,6 +192,10 @@
     "successDesc": "Twoje konta są teraz synchronizowane.",
     "goToBanks": "Przejdź do moich banków",
     "connectionFailed": "Połączenie nie powiodło się",
-    "tanFailed": "TAN nie powiódł się"
+    "tanFailed": "TAN nie powiódł się",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking dla ponad 5 000 banków w 50+ krajach",
+    "saltedgeNote": "Zostaniesz przekierowany do bezpiecznego portalu Salt Edge, aby połączyć swój bank. Twoje dane bankowe są tam wprowadzane bezpośrednio i nigdy nie są nam udostępniane.",
+    "saltedgeSecurityNote": "Twoje dane bankowe są wprowadzane bezpośrednio w bezpiecznym portalu Salt Edge. Nigdy nie widzimy Twojego loginu ani hasła bankowego — tylko identyfikator połączenia."
   }
 }

@@ -7,6 +7,7 @@ import * as paypalService from '../services/paypal.service';
 import * as wiseService from '../services/wise.service';
 import * as revolutService from '../services/revolut.service';
 import * as gcService from '../services/gocardless.service';
+import * as seService from '../services/saltedge.service';
 import { getAllBanks, searchBanks, findBankByBlz } from '@finanzapp/config';
 import { ConnectorType } from '@finanzapp/types';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
@@ -80,6 +81,8 @@ router.post('/connections/:id/sync', authenticate, async (req: AuthRequest, res,
       revolutService.syncTransactions(req.params.id).catch(console.error);
     } else if (conn.connectorType === ConnectorType.GOCARDLESS) {
       gcService.syncTransactions(req.params.id).catch(console.error);
+    } else if (conn.connectorType === ConnectorType.SALTEDGE) {
+      seService.syncTransactions(req.params.id).catch(console.error);
     } else {
       fintsService.syncTransactions(req.params.id).catch(console.error);
     }
@@ -198,6 +201,31 @@ router.get('/gocardless/callback', async (req, res, next) => {
   } catch (e) {
     const msg = e instanceof Error ? encodeURIComponent(e.message) : 'unknown_error';
     res.redirect(`${frontendBase}/banks/connect?gocardless=error&msg=${msg}`);
+    void next;
+  }
+});
+
+// ── Salt Edge ─────────────────────────────────────────────────────────────────
+
+router.get('/saltedge/auth-url', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const result = await seService.createConnectSession(req.userId!);
+    res.json({ data: { authUrl: result.url, configured: true } });
+  } catch (e) { next(e); }
+});
+
+router.get('/saltedge/callback', async (req, res, next) => {
+  const frontendBase = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
+  try {
+    const { connection_id, state } = z.object({
+      connection_id: z.string().min(1),
+      state: z.string().min(1),
+    }).parse(req.query);
+    await seService.handleCallback(connection_id, state);
+    res.redirect(`${frontendBase}/banks/connect?saltedge=connected`);
+  } catch (e) {
+    const msg = e instanceof Error ? encodeURIComponent(e.message) : 'unknown_error';
+    res.redirect(`${frontendBase}/banks/connect?saltedge=error&msg=${msg}`);
     void next;
   }
 });

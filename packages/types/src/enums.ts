@@ -32,6 +32,7 @@ export enum ConnectorType {
   WISE = 'WISE',
   REVOLUT = 'REVOLUT',
   GOCARDLESS = 'GOCARDLESS',
+  SALTEDGE = 'SALTEDGE',
 }
 
 export enum TanMethod {

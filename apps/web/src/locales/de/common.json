@@ -282,6 +282,10 @@
     "wiseDesc": "Wise-Mehrwährungskonto-Transaktionen importieren",
     "revolutDesc": "Revolut-Kontotransaktionen importieren",
     "oauthNote": "Du wirst weitergeleitet, um den Lesezugriff auf dein Konto zu autorisieren. Es werden keine Zahlungsberechtigungen angefordert.",
-    "oauthButton": "Mit {{provider}} verbinden"
+    "oauthButton": "Mit {{provider}} verbinden",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking für über 5.000 Banken in 50+ Ländern",
+    "saltedgeNote": "Du wirst zum sicheren Salt-Edge-Portal weitergeleitet, um deine Bank zu verbinden. Deine Bankzugangsdaten werden dort direkt eingegeben und niemals an uns weitergegeben.",
+    "saltedgeSecurityNote": "Deine Bankzugangsdaten werden direkt im sicheren Salt-Edge-Portal eingegeben. Wir sehen niemals dein Bank-Login oder Passwort – nur eine Verbindungs-ID."
   }
 }

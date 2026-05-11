@@ -190,6 +190,10 @@
     "successDesc": "Hesaplarınız senkronize ediliyor.",
     "goToBanks": "Bankalarıma git",
     "connectionFailed": "Bağlantı başarısız",
-    "tanFailed": "TAN başarısız"
+    "tanFailed": "TAN başarısız",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "50+ ülkede 5.000'den fazla banka için Açık Bankacılık",
+    "saltedgeNote": "Bankanızı bağlamak için Salt Edge güvenli portalına yönlendirileceksiniz. Banka kimlik bilgileriniz doğrudan orada girilir ve hiçbir zaman bizimle paylaşılmaz.",
+    "saltedgeSecurityNote": "Banka kimlik bilgileriniz doğrudan Salt Edge'in güvenli portalına girilir. Banka giriş bilgilerinizi veya şifrenizi asla görmeyiz — yalnızca bir bağlantı kimliği."
   }
 }

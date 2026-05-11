@@ -190,6 +190,10 @@
     "successDesc": "Conturile tale sunt acum sincronizate.",
     "goToBanks": "Mergi la băncile mele",
     "connectionFailed": "Conexiune eșuată",
-    "tanFailed": "TAN eșuat"
+    "tanFailed": "TAN eșuat",
+    "saltedge": "Salt Edge",
+    "saltedgeDesc": "Open Banking for 5,000+ banks in 50+ countries",
+    "saltedgeNote": "You will be redirected to the Salt Edge secure portal to connect your bank. Your bank credentials are entered directly there and are never shared with us.",
+    "saltedgeSecurityNote": "Your bank credentials are entered directly on Salt Edge's secure portal. We never see your bank login or password — only a connection ID."
   }
 }

@@ -8,7 +8,7 @@ import type { BankRegistryEntry } from '@finanzapp/config';
 import { Search, ChevronRight, Lock, CheckCircle, Building2, Wallet, Globe } from 'lucide-react';
 
 type Step = 'provider' | 'select' | 'credentials' | 'tan' | 'oauth' | 'gc-select' | 'done';
-type OAuthProvider = 'paypal' | 'wise' | 'revolut';
+type OAuthProvider = 'paypal' | 'wise' | 'revolut' | 'saltedge';
 const FINTS_STEPS: Step[] = ['provider', 'select', 'credentials', 'tan', 'done'];
 const OAUTH_STEPS: Step[] = ['provider', 'oauth', 'done'];
 const GC_STEPS: Step[] = ['provider', 'gc-select', 'oauth', 'done'];
@@ -32,9 +32,9 @@ export default function VerbindenPage() {
   const [requiresTanInput, setRequiresTanInput] = useState(true);
   const [error, setError] = useState('');
 
-  // Detect return from OAuth / GoCardless redirect
+  // Detect return from OAuth / GoCardless / Salt Edge redirect
   useEffect(() => {
-    for (const p of ['paypal', 'wise', 'revolut'] as OAuthProvider[]) {
+    for (const p of ['paypal', 'wise', 'revolut', 'saltedge'] as OAuthProvider[]) {
       const val = params.get(p);
       if (val === 'connected') { setProvider(p); setStep('done'); return; }
       if (val === 'error') { setProvider(p); setError(params.get('msg') ?? t('connectBank.connectionFailed')); return; }
@@ -172,6 +172,22 @@ export default function VerbindenPage() {
               <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.euBankDesc')}</p>
             </div>
             <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+          </button>
+
+          <button
+            onClick={() => chooseProvider('saltedge')}
+            className="w-full flex items-center gap-4 p-5 card hover:shadow-card-hover transition-all text-left group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 group-hover:bg-teal-100 transition-colors">
+              <Globe size={20} className="text-teal-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-slate-900 group-hover:text-teal-600 transition-colors">
+                {t('connectBank.saltedge')}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('connectBank.saltedgeDesc')}</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-teal-400 transition-colors" />
           </button>
 
           <button
@@ -368,29 +384,43 @@ export default function VerbindenPage() {
         </div>
       )}
 
-      {/* Step: OAuth redirect (PayPal / Wise / Revolut) */}
+      {/* Step: OAuth redirect (PayPal / Wise / Revolut / Salt Edge) */}
       {step === 'oauth' && provider && provider !== 'fints' && provider !== 'gocardless' && (
         <div className="space-y-5">
           <div className="flex items-center gap-4 p-5 card">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-              <Wallet size={22} className="text-blue-600" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+              provider === 'saltedge' ? 'bg-teal-50' : 'bg-blue-50'
+            }`}>
+              {provider === 'saltedge'
+                ? <Globe size={22} className="text-teal-600" />
+                : <Wallet size={22} className="text-blue-600" />
+              }
             </div>
             <div>
-              <p className="font-semibold text-slate-900 dark:text-slate-100 capitalize">{provider}</p>
+              <p className="font-semibold text-slate-900 dark:text-slate-100 capitalize">
+                {provider === 'saltedge' ? 'Salt Edge' : provider}
+              </p>
               <p className="text-xs text-slate-400 mt-0.5">{t(`connectBank.${provider}Desc`)}</p>
             </div>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{t('connectBank.oauthNote')}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            {t(provider === 'saltedge' ? 'connectBank.saltedgeNote' : 'connectBank.oauthNote')}
+          </p>
           <div className="flex items-start gap-2.5 text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3.5 ring-1 ring-slate-200/60 dark:ring-slate-700/60">
             <Lock size={13} className="text-slate-400 shrink-0 mt-0.5" />
-            {t('connectBank.securityNote')}
+            {provider === 'saltedge'
+              ? t('connectBank.saltedgeSecurityNote')
+              : t('connectBank.securityNote')
+            }
           </div>
           <button
             onClick={() => oauthMutation.mutate(provider)}
             disabled={oauthMutation.isPending}
             className="btn-primary w-full py-2.5"
           >
-            {oauthMutation.isPending ? t('connectBank.paypalConnecting') : t('connectBank.oauthButton', { provider: provider.charAt(0).toUpperCase() + provider.slice(1) })}
+            {oauthMutation.isPending
+              ? t('connectBank.paypalConnecting')
+              : t('connectBank.oauthButton', { provider: provider === 'saltedge' ? 'Salt Edge' : provider.charAt(0).toUpperCase() + provider.slice(1) })}
           </button>
         </div>
       )}
