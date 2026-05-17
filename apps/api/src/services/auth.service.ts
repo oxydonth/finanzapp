@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { prisma } from '../config/database';
 import { signAccessToken, signRefreshToken, signMfaToken, verifyRefreshToken } from '../utils/jwt';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../utils/errors';
-import { sendVerificationEmail } from './mail.service';
+import { sendVerificationEmail, sendPasswordResetEmail } from './mail.service';
 
 export async function register(
   email: string,
@@ -36,7 +36,7 @@ export async function register(
 
 export async function login(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new UnauthorizedError('Invalid email or password');
+  if (!user || user.deletedAt) throw new UnauthorizedError('Invalid email or password');
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new UnauthorizedError('Invalid email or password');
@@ -118,6 +118,43 @@ export async function resendVerification(userId: string): Promise<void> {
   const emailVerifyToken = crypto.randomBytes(32).toString('hex');
   await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken } });
   sendVerificationEmail(user.email, user.firstName, emailVerifyToken).catch(console.error);
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Always succeed silently — prevents email enumeration
+  if (!user || user.deletedAt) return;
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordResetToken: token, passwordResetExpiry: expiry },
+  });
+
+  sendPasswordResetEmail(user.email, user.firstName, token).catch(console.error);
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetToken: token,
+      passwordResetExpiry: { gt: new Date() },
+      deletedAt: null,
+    },
+  });
+  if (!user) throw new UnauthorizedError('Invalid or expired reset token');
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
+      refreshTokenHash: null, // invalidate all sessions
+    },
+  });
 }
 
 export async function getProfile(userId: string) {

@@ -69,6 +69,7 @@ describe('totpGenerate', () => {
 
 describe('setupMfa', () => {
   beforeEach(() => {
+    mockPrisma.user.findUnique.mockResolvedValue({ email: 'test@example.com', mfaEnabled: false });
     mockPrisma.user.update.mockResolvedValue({});
   });
 

@@ -74,6 +74,58 @@ export async function sendVerificationEmail(
   });
 }
 
+export async function sendBudgetAlertEmail(
+  email: string,
+  firstName: string,
+  budgetName: string,
+  spentPercent: number,
+  spentFormatted: string,
+  limitFormatted: string,
+): Promise<void> {
+  const appUrl = env.CORS_ORIGINS[0] ?? 'http://localhost:3001';
+
+  await send({
+    to: email,
+    subject: `Budget-Warnung: ${budgetName} – Finanzapp`,
+    text: [
+      `Hallo ${firstName},`,
+      '',
+      `Dein Budget "${budgetName}" ist zu ${spentPercent}% ausgeschöpft.`,
+      `Ausgaben: ${spentFormatted} von ${limitFormatted}`,
+      '',
+      `Überblick: ${appUrl}/budget`,
+    ].join('\n'),
+    html: `
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <div style="max-width:520px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
+    <div style="background:#f59e0b;padding:32px 40px">
+      <span style="font-size:18px;font-weight:700;color:#ffffff">Finanzapp · Budget-Warnung</span>
+    </div>
+    <div style="padding:40px">
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#0f172a">Budget fast erreicht</h1>
+      <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6">
+        Hallo ${firstName},<br><br>
+        dein Budget <strong>${budgetName}</strong> ist zu <strong>${spentPercent}%</strong> ausgeschöpft.
+      </p>
+      <div style="background:#fef3c7;border-radius:12px;padding:16px 20px;margin-bottom:24px">
+        <p style="margin:0;font-size:14px;color:#92400e">
+          Ausgaben: <strong>${spentFormatted}</strong> von <strong>${limitFormatted}</strong>
+        </p>
+      </div>
+      <a href="${appUrl}/budget"
+         style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700">
+        Budget ansehen
+      </a>
+    </div>
+  </div>
+</body>
+</html>`,
+  });
+}
+
 export async function sendPasswordResetEmail(
   email: string,
   firstName: string,

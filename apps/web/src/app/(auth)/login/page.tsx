@@ -123,7 +123,12 @@ export default function LoginPage() {
                   />
                 </div>
                 <div>
-                  <label className="label">{t('auth.password')}</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label !mb-0">{t('auth.password')}</label>
+                    <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-brand-600 transition-colors">
+                      Passwort vergessen?
+                    </Link>
+                  </div>
                   <input
                     type="password"
                     value={password}

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /accounts
+Disallow: /transactions
+Disallow: /categories
+Disallow: /budget
+Disallow: /statistics
+Disallow: /banks
+Disallow: /settings
+
+Sitemap: https://finanzapp.de/sitemap.xml

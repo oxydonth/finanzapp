@@ -19,7 +19,10 @@
     "@finanzapp/types": "*",
     "@finanzapp/utils": "*",
     "@prisma/client": "^5.17.0",
+    "@sentry/node": "^8.0.0",
     "bcryptjs": "^2.4.3",
+    "pino": "^9.0.0",
+    "pino-http": "^10.0.0",
     "bull": "^4.16.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -40,6 +43,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/pino-http": "^5.8.4",
     "@types/bull": "^4.10.0",
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",

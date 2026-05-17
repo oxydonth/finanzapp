@@ -94,6 +94,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
+        {/* Legal links */}
+        <div className="px-4 pb-2 flex items-center gap-3">
+          <Link href="/impressum" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Impressum</Link>
+          <Link href="/datenschutz" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Datenschutz</Link>
+          <Link href="/agb" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">AGB</Link>
+        </div>
+
         {/* User */}
         <div className="px-2.5 py-3 border-t border-white/[0.06] girly:border-pink-300/40">
           <div className="flex items-center gap-3 px-3 py-2 mb-1">

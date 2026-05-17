@@ -51,6 +51,25 @@ router.post('/logout', authenticate, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+const forgotSchema = z.object({ email: z.string().email() });
+const resetSchema = z.object({ token: z.string().min(1), password: z.string().min(8) });
+
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = forgotSchema.parse(req.body);
+    await authService.forgotPassword(email);
+    res.json({ data: { message: 'If that email exists, a reset link was sent.' } });
+  } catch (e) { next(e); }
+});
+
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { token, password } = resetSchema.parse(req.body);
+    await authService.resetPassword(token, password);
+    res.json({ data: { message: 'Password updated successfully.' } });
+  } catch (e) { next(e); }
+});
+
 router.get('/verify-email', async (req, res, next) => {
   const frontendBase = (process.env.CORS_ORIGINS ?? 'http://localhost:3001').split(',')[0];
   try {

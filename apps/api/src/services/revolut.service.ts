@@ -5,22 +5,32 @@ import { SyncStatus, TransactionType, AccountType, ConnectorType } from '@finanz
 import { AppError, NotFoundError } from '../utils/errors';
 import { v4 as uuidv4 } from 'uuid';
 import { applyCategorizationRules } from './categorization.service';
+import { redis } from '../config/redis';
 
 // Revolut Business API (Personal API uses a simple API key)
 const REVOLUT_API = 'https://b2b.revolut.com/api/1.0';
 
-// OAuth state → userId
-const pendingOAuthStates = new Map<string, { userId: string }>();
+const OAUTH_STATE_TTL = 10 * 60;
+const REVOLUT_STATE_PREFIX = 'revolut:oauth:';
+
+async function setOAuthState(state: string, userId: string): Promise<void> {
+  await redis.setex(`${REVOLUT_STATE_PREFIX}${state}`, OAUTH_STATE_TTL, userId);
+}
+
+async function popOAuthState(state: string): Promise<string | null> {
+  const userId = await redis.get(`${REVOLUT_STATE_PREFIX}${state}`);
+  if (userId) await redis.del(`${REVOLUT_STATE_PREFIX}${state}`);
+  return userId;
+}
 
 export function isConfigured(): boolean {
   return !!(env.REVOLUT_CLIENT_ID && env.REVOLUT_CLIENT_SECRET && env.REVOLUT_REDIRECT_URI);
 }
 
-export function getAuthUrl(userId: string): string {
+export async function getAuthUrl(userId: string): Promise<string> {
   if (!isConfigured()) throw new AppError('Revolut integration not configured', 503);
   const state = uuidv4();
-  pendingOAuthStates.set(state, { userId });
-  setTimeout(() => pendingOAuthStates.delete(state), 10 * 60 * 1000);
+  await setOAuthState(state, userId);
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: env.REVOLUT_CLIENT_ID!,
@@ -32,10 +42,8 @@ export function getAuthUrl(userId: string): string {
 }
 
 export async function handleCallback(code: string, state: string): Promise<string> {
-  const session = pendingOAuthStates.get(state);
-  if (!session) throw new AppError('OAuth state invalid or expired', 400);
-  pendingOAuthStates.delete(state);
-  const { userId } = session;
+  const userId = await popOAuthState(state);
+  if (!userId) throw new AppError('OAuth state invalid or expired', 400);
 
   const tokenRes = await fetch(`${REVOLUT_API}/auth/token`, {
     method: 'POST',

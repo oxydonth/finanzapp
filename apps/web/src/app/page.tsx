@@ -308,7 +308,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between flex-wrap gap-4">
           <Logo markSize={22} textClass="text-[13px] text-white" dark />
           <div className="flex items-center gap-6">
+            <Link href="/impressum" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Impressum</Link>
             <Link href="/datenschutz" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Datenschutz</Link>
+            <Link href="/agb" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">AGB</Link>
             <p className="text-xs text-slate-600">© 2026 Finanzapp · Made in Germany</p>
           </div>
         </div>

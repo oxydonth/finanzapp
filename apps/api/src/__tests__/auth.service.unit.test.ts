@@ -57,6 +57,20 @@ const baseUser = {
   mfaBackupCodes: [],
 };
 
+// Simulates what Prisma returns when select excludes sensitive fields
+const safeUser = {
+  id: baseUser.id,
+  email: baseUser.email,
+  firstName: baseUser.firstName,
+  lastName: baseUser.lastName,
+  currency: baseUser.currency,
+  locale: baseUser.locale,
+  isEmailVerified: baseUser.isEmailVerified,
+  mfaEnabled: baseUser.mfaEnabled,
+  createdAt: baseUser.createdAt,
+  updatedAt: baseUser.updatedAt,
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -91,7 +105,8 @@ describe('register', () => {
 
   it('does not expose passwordHash in return value', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(null);
-    mockPrisma.user.create.mockResolvedValue(baseUser);
+    // Return safeUser to simulate Prisma honoring the select clause
+    mockPrisma.user.create.mockResolvedValue(safeUser);
     mockPrisma.user.update.mockResolvedValue({});
 
     const result = await authService.register('new@example.com', 'Password1!', 'A', 'B');
@@ -182,7 +197,8 @@ describe('verifyEmail', () => {
 
 describe('getProfile', () => {
   it('returns user without sensitive fields', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(baseUser);
+    // Return safeUser to simulate Prisma honoring the select clause
+    mockPrisma.user.findUnique.mockResolvedValue(safeUser);
     const profile = await authService.getProfile('user-1');
     expect(profile.email).toBe('test@example.com');
     expect((profile as Record<string, unknown>).passwordHash).toBeUndefined();

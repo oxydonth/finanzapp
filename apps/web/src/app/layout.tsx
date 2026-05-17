@@ -8,6 +8,21 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Finanzapp – Deine Finanzen im Überblick',
   description: 'Alle deutschen Bankkonten auf einen Blick. Ausgaben tracken, Budgets planen.',
+  metadataBase: new URL('https://finanzapp.de'),
+  openGraph: {
+    title: 'Finanzapp – Deine Finanzen im Überblick',
+    description: 'Alle deutschen Bankkonten auf einen Blick. Ausgaben tracken, Budgets planen.',
+    url: 'https://finanzapp.de',
+    siteName: 'Finanzapp',
+    locale: 'de_DE',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Finanzapp – Deine Finanzen im Überblick',
+    description: 'Alle deutschen Bankkonten auf einen Blick.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

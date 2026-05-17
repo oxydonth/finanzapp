@@ -10,6 +10,7 @@ import { SyncStatus, AccountType, TransactionType } from '@finanzapp/types';
 import { AppError, NotFoundError } from '../utils/errors';
 import { v4 as uuidv4 } from 'uuid';
 import { applyCategorizationRules } from './categorization.service';
+import { redis } from '../config/redis';
 
 interface PendingSession {
   client: PinTanClient;
@@ -23,8 +24,24 @@ interface PendingSession {
   challengeText?: string;
 }
 
-// In-memory TAN challenge store (use Redis in production)
-const pendingSessions = new Map<string, PendingSession>();
+const TAN_SESSION_TTL = 10 * 60; // 10 minutes in seconds
+const FINTS_SESSION_PREFIX = 'fints:session:';
+
+async function setSession(sessionId: string, data: Omit<PendingSession, 'client'>): Promise<void> {
+  await redis.setex(`${FINTS_SESSION_PREFIX}${sessionId}`, TAN_SESSION_TTL, JSON.stringify(data));
+}
+
+async function getSession(sessionId: string): Promise<Omit<PendingSession, 'client'> | null> {
+  const raw = await redis.get(`${FINTS_SESSION_PREFIX}${sessionId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function deleteSession(sessionId: string): Promise<void> {
+  await redis.del(`${FINTS_SESSION_PREFIX}${sessionId}`);
+}
+
+// In-memory map for active PinTanClient objects (can't be serialized to Redis)
+const activeClients = new Map<string, PinTanClient>();
 
 export async function initiateConnection(
   userId: string,
@@ -54,13 +71,15 @@ export async function initiateConnection(
       const requiresTanInput = method
         ? method.challengeValueRequired !== false && (method.maxLengthInput ?? 1) > 0
         : true;
-      pendingSessions.set(sessionId, {
-        client, blz, loginName, pin, userId,
+      activeClients.set(sessionId, client);
+      await setSession(sessionId, {
+        blz, loginName, pin, userId,
         tanDialog: err.dialog,
         transactionReference: err.transactionReference,
         challengeText: err.challengeText,
       });
-      setTimeout(() => pendingSessions.delete(sessionId), 10 * 60 * 1000);
+      // Clean up in-memory client when Redis TTL expires
+      setTimeout(() => activeClients.delete(sessionId), TAN_SESSION_TTL * 1000);
       return { sessionId, tanChallenge: err.challengeText || 'TAN required', requiresTanInput };
     }
     const msg = err instanceof Error ? err.message : String(err);
@@ -76,19 +95,24 @@ export async function submitTan(
   sessionId: string,
   tan: string,
 ): Promise<{ connectionId: string }> {
-  const session = pendingSessions.get(sessionId);
-  if (!session) throw new AppError('Session expired or not found', 404);
-  if (session.userId !== userId) throw new AppError('Session expired or not found', 404);
-  pendingSessions.delete(sessionId);
+  const sessionData = await getSession(sessionId);
+  if (!sessionData) throw new AppError('Session expired or not found', 404);
+  if (sessionData.userId !== userId) throw new AppError('Session expired or not found', 404);
+  await deleteSession(sessionId);
+  const client = activeClients.get(sessionId);
+  activeClients.delete(sessionId);
+  const session = { ...sessionData, client };
+
+  if (!client) throw new AppError('Session expired — client no longer in memory', 404);
 
   let accounts: SEPAAccount[];
   try {
     if (session.tanDialog && session.transactionReference) {
       // Continue the stalled FinTS dialog by sending the TAN response.
       // createDialog(savedDialog) uses Object.assign so it copies dialogId, msgNo, tanMethods etc.
-      const dialog = session.client.createDialog(session.tanDialog);
+      const dialog = client.createDialog(session.tanDialog);
       dialog.msgNo = dialog.msgNo + 1;
-      const request = session.client.createRequest(dialog, [
+      const request = client.createRequest(dialog, [
         new HKTAN({
           segNo: 3,
           version: 6,

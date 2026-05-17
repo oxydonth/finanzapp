@@ -5,6 +5,7 @@ import { SyncStatus, TransactionType, AccountType, ConnectorType } from '@finanz
 import { AppError, NotFoundError } from '../utils/errors';
 import { v4 as uuidv4 } from 'uuid';
 import { applyCategorizationRules } from './categorization.service';
+import { redis } from '../config/redis';
 
 const PAYPAL_API = 'https://api-m.paypal.com';
 const PAYPAL_CONNECT_URL = 'https://www.paypal.com/connect/';
@@ -15,18 +16,27 @@ const SCOPES = [
   'https://uri.paypal.com/services/reporting/search/read',
 ].join(' ');
 
-// In-memory OAuth state → userId map (same pattern as FinTS pending sessions)
-const pendingOAuthStates = new Map<string, { userId: string }>();
+const OAUTH_STATE_TTL = 10 * 60; // 10 minutes
+const PAYPAL_STATE_PREFIX = 'paypal:oauth:';
+
+async function setOAuthState(state: string, userId: string): Promise<void> {
+  await redis.setex(`${PAYPAL_STATE_PREFIX}${state}`, OAUTH_STATE_TTL, userId);
+}
+
+async function popOAuthState(state: string): Promise<string | null> {
+  const userId = await redis.get(`${PAYPAL_STATE_PREFIX}${state}`);
+  if (userId) await redis.del(`${PAYPAL_STATE_PREFIX}${state}`);
+  return userId;
+}
 
 export function isConfigured(): boolean {
   return !!(env.PAYPAL_CLIENT_ID && env.PAYPAL_CLIENT_SECRET && env.PAYPAL_REDIRECT_URI);
 }
 
-export function getAuthUrl(userId: string): string {
+export async function getAuthUrl(userId: string): Promise<string> {
   if (!isConfigured()) throw new AppError('PayPal integration not configured', 503);
   const state = uuidv4();
-  pendingOAuthStates.set(state, { userId });
-  setTimeout(() => pendingOAuthStates.delete(state), 10 * 60 * 1000);
+  await setOAuthState(state, userId);
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: env.PAYPAL_CLIENT_ID!,
@@ -38,10 +48,8 @@ export function getAuthUrl(userId: string): string {
 }
 
 export async function handleCallback(code: string, state: string): Promise<string> {
-  const session = pendingOAuthStates.get(state);
-  if (!session) throw new AppError('OAuth state invalid or expired', 400);
-  pendingOAuthStates.delete(state);
-  const { userId } = session;
+  const userId = await popOAuthState(state);
+  if (!userId) throw new AppError('OAuth state invalid or expired', 400);
 
   const basicAuth = Buffer.from(`${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`).toString('base64');
 

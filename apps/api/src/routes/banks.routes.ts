@@ -18,11 +18,15 @@ const router = Router();
 // ── Bank registry ─────────────────────────────────────────────────────────────
 
 router.get('/', async (_req, res, next) => {
-  try { res.json({ data: getAllBanks() }); } catch (e) { next(e); }
+  try {
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    res.json({ data: getAllBanks() });
+  } catch (e) { next(e); }
 });
 
 router.get('/search', async (req, res, next) => {
   try {
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     const { q } = z.object({ q: z.string().min(1) }).parse(req.query);
     res.json({ data: searchBanks(q) });
   } catch (e) { next(e); }
